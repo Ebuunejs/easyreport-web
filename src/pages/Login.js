@@ -76,9 +76,7 @@ const Login = () => {
         console.log("userData.role: ", userData.role);
         setUserRole(userData.role);
         setLoginSuccess(true);
-        console.log("---------------------------------------------------");
-        console.log("HAHAHAHAHHAHAHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAH");
-        console.log("---------------------------------------------------");
+        
         if(userData.role === 'employee') {
           navigate('/employee/dashboard');
         } else {
