@@ -77,7 +77,7 @@ const Login = () => {
         setUserRole(userData.role);
         setLoginSuccess(true);
         console.log("---------------------------------------------------");
-        console.log("GitHub Actions Test!");
+        console.log("HAHAHAHAHHAHAHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAH");
         console.log("---------------------------------------------------");
         if(userData.role === 'employee') {
           navigate('/employee/dashboard');
