@@ -7,6 +7,7 @@ import {
   Alert
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import EmployeeService from '../services/EmployeeService';
 import CompanyService from '../services/CompanyService';
@@ -22,6 +23,7 @@ import EditEmployeeModal from '../components/employees/EditEmployeeModal';
 import ImportEmployeesModal from '../components/employees/ImportEmployeesModal';
 
 const Employees = () => {
+  const { isManager } = useAuth();
   const [loading, setLoading] = useState(true);
   const [employees, setEmployees] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -894,6 +896,7 @@ const Employees = () => {
         projects={projects}
         professions={professions}
         bildungsTags={bildungsTags}
+        isManager={isManager()}
       />
 
       <DeleteEmployeeModal
@@ -915,6 +918,7 @@ const Employees = () => {
           projects={projects}
           professions={professions}
           bildungsTags={bildungsTags}
+          isManager={isManager()}
         />
       )}
 

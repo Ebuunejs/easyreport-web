@@ -74,17 +74,18 @@ const labelStyles = {
   fontSize: '0.9rem'
 };
 
-const AddEmployeeModal = ({ 
-  open, 
-  onClose, 
-  newEmployee, 
-  handleInputChange, 
-  handleProjectChange, 
-  handleAddEmployee, 
-  companies, 
+const AddEmployeeModal = ({
+  open,
+  onClose,
+  newEmployee,
+  handleInputChange,
+  handleProjectChange,
+  handleAddEmployee,
+  companies,
   projects,
   professions,
-  bildungsTags = []
+  bildungsTags = [],
+  isManager = false
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const theme = useTheme();
@@ -211,8 +212,8 @@ const AddEmployeeModal = ({
              newEmployee.password && newEmployee.password === newEmployee.checkPassword;
     }
     if (activeStep === 1) {
-      return newEmployee.company_id && newEmployee.position && newEmployee.employee_number && 
-             newEmployee.hire_date && newEmployee.hourly_rate;
+      const baseFields = newEmployee.company_id && newEmployee.position && newEmployee.employee_number && newEmployee.hire_date;
+      return isManager ? baseFields : baseFields && newEmployee.hourly_rate;
     }
     if (activeStep === 2) {
       // Bei Kontaktdaten und persönlichen Informationen nur Basisvalidierung
@@ -671,46 +672,50 @@ const AddEmployeeModal = ({
                       helperText="Datum der Einstellung"
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      name="hourly_rate"
-                      label="Stundensatz (CHF) - Einkauf"
-                      type="number"
-                      fullWidth
-                      value={newEmployee.hourly_rate || ''}
-                      onChange={handleInputChange}
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">CHF</InputAdornment>,
-                        inputProps: { step: 0.01, min: 0 }
-                      }}
-                      InputLabelProps={{
-                        sx: { fontWeight: 500 }
-                      }}
-                      required
-                      variant="outlined"
-                      helperText="Stundensatz für Einkauf des Mitarbeiters"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      name="hourly_rate_sale"
-                      label="Stundensatz (CHF) - Verkauf"
-                      type="number"
-                      fullWidth
-                      value={newEmployee.hourly_rate_sale || ''}
-                      onChange={handleInputChange}
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">CHF</InputAdornment>,
-                        inputProps: { step: 0.01, min: 0 }
-                      }}
-                      InputLabelProps={{
-                        sx: { fontWeight: 500 }
-                      }}
-                      required
-                      variant="outlined"
-                      helperText="Stundensatz für Verkauf des Mitarbeiters"
-                    />
-                  </Grid>
+                  {!isManager && (
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        name="hourly_rate"
+                        label="Stundensatz (CHF) - Einkauf"
+                        type="number"
+                        fullWidth
+                        value={newEmployee.hourly_rate || ''}
+                        onChange={handleInputChange}
+                        InputProps={{
+                          startAdornment: <InputAdornment position="start">CHF</InputAdornment>,
+                          inputProps: { step: 0.01, min: 0 }
+                        }}
+                        InputLabelProps={{
+                          sx: { fontWeight: 500 }
+                        }}
+                        required
+                        variant="outlined"
+                        helperText="Stundensatz für Einkauf des Mitarbeiters"
+                      />
+                    </Grid>
+                  )}
+                  {!isManager && (
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        name="hourly_rate_sale"
+                        label="Stundensatz (CHF) - Verkauf"
+                        type="number"
+                        fullWidth
+                        value={newEmployee.hourly_rate_sale || ''}
+                        onChange={handleInputChange}
+                        InputProps={{
+                          startAdornment: <InputAdornment position="start">CHF</InputAdornment>,
+                          inputProps: { step: 0.01, min: 0 }
+                        }}
+                        InputLabelProps={{
+                          sx: { fontWeight: 500 }
+                        }}
+                        required
+                        variant="outlined"
+                        helperText="Stundensatz für Verkauf des Mitarbeiters"
+                      />
+                    </Grid>
+                  )}
                   <Grid item xs={12} md={6}>
                     <TextField
                       name="minimum_wage"
