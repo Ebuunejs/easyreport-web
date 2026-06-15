@@ -1,0 +1,107 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .appbar {
+    height: 120px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .appbar-title {
+    width: 100%;
+  }
+  .appbar-actions {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  /* Kleinere Abstände für mobile Ansichten */
+  .MuiGrid-container {
+    margin-top: 8px !important;
+  }
+  /* Volle Breite für Eingabefelder auf kleinen Bildschirmen */
+  .MuiTextField-root, .MuiAutocomplete-root {
+    width: 100% !important;
+  }
+  /* Kleinere Schriftgröße für Tabellen auf Mobilgeräten */
+  .MuiTableCell-root {
+    padding: 8px !important;
+  }
+  /* Verhindert horizontales Scrollen durch zu breite Inhalte */
+  .MuiBox-root, .MuiContainer-root, .MuiPaper-root {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  /* Verbesserte Touch-Targets für Buttons auf Mobilgeräten */
+  .MuiButton-root, .MuiIconButton-root {
+    min-width: 42px;
+    min-height: 42px;
+  }
+  /* Kleinere Paddings für Cards/Paper auf Mobilgeräten */
+  .MuiCard-root, .MuiPaper-root {
+    padding: 12px !important;
+  }
+}
+
+/* Optimierte Scrolling-Erfahrung für alle Touch-Geräte */
+@media (pointer: coarse) {
+  .MuiList-root, .MuiTableContainer-root {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Verbesserte Lesbarkeit durch höheren Kontrast auf mobilen Bildschirmen */
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+  h1, h2, h3 {
+    margin-bottom: 0.5em;
+  }
+  .MuiTypography-h4 {
+    font-size: 1.5rem !important;
+  }
+  .MuiTypography-h5 {
+    font-size: 1.25rem !important;
+  }
+  .MuiTypography-h6 {
+    font-size: 1.1rem !important;
+  }
+}

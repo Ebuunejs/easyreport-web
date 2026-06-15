@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stundenrapporte - Projektbanner</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .banner-container {
+            width: 1024px;
+            height: 500px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #1976d2 0%, #42a5f5 50%, #90caf9 100%);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(25, 118, 210, 0.3);
+        }
+        
+        .banner-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+        }
+        
+        .decorative-element {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .decorative-element.top-right {
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            font-size: 32px;
+        }
+        
+        .decorative-element.bottom-left {
+            bottom: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+        }
+        
+        .main-content {
+            text-align: center;
+            color: white;
+            z-index: 2;
+            max-width: 800px;
+            padding: 0 32px;
+            position: relative;
+        }
+        
+        .main-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 0 0 16px 0;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #ffffff, #e3f2fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin: 0 0 24px 0;
+            opacity: 0.9;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .features {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .feature-icon {
+            font-size: 20px;
+        }
+        
+        .feature-text {
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .background-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            z-index: 1;
+        }
+        
+        .download-info {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .download-button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        
+        .download-button:hover {
+            background: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="banner-container">
+        <!-- Dekorative Elemente -->
+        <div class="decorative-element top-right">⏰</div>
+        <div class="decorative-element bottom-left">🏗️</div>
+        
+        <!-- Hauptinhalt -->
+        <div class="main-content">
+            <h1 class="main-title">Stundenrapporte</h1>
+            <p class="subtitle">Professionelle Zeiterfassung für Baustellen</p>
+            
+            <div class="features">
+                <div class="feature">
+                    <span class="feature-icon">📱</span>
+                    <span class="feature-text">Mobile App</span>
+                </div>
+                
+                <div class="feature">
+                    <span class="feature-icon">📍</span>
+                    <span class="feature-text">GPS-Tracking</span>
+                </div>
+                
+                <div class="feature">
+                    <span class="feature-icon">📊</span>
+                    <span class="feature-text">Berichte</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hintergrundkreis -->
+        <div class="background-circle"></div>
+    </div>
+    
+    <div class="download-info">
+        <p><strong>Banner-Größe:</strong> 1024 × 500 Pixel</p>
+        <p><strong>Format:</strong> HTML/CSS (kann als Bild exportiert werden)</p>
+        <p><strong>Verwendung:</strong> Vorstellungsgrafik für Ihr Projekt</p>
+        
+        <button class="download-button" onclick="downloadAsImage()">Als Bild herunterladen</button>
+        <button class="download-button" onclick="printBanner()">Drucken</button>
+    </div>
+
+    <script>
+        function downloadAsImage() {
+            alert('Um dieses Banner als Bild zu speichern:\n\n1. Öffnen Sie die Browser-Entwicklertools (F12)\n2. Gehen Sie zum "Console" Tab\n3. Führen Sie "html2canvas(document.querySelector(\".banner-container\")).then(canvas => canvas.toBlob(blob => { const url = URL.createObjectURL(blob); const a = document.createElement(\"a\"); a.href = url; a.download = \"stundenrapporte-banner.png\"; a.click(); }))" aus\n\nOder verwenden Sie die Browser-Druckfunktion und wählen Sie "Als PDF speichern".');
+        }
+        
+        function printBanner() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
