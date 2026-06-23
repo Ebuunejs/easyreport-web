@@ -81,6 +81,7 @@ const Employees = () => {
   const [editEmployeeData, setEditEmployeeData] = useState(null);
   
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [downloadingEmployeeListPdf, setDownloadingEmployeeListPdf] = useState(false);
   
   // Sortierung State
   const [order, setOrder] = useState('asc');
@@ -493,6 +494,31 @@ const Employees = () => {
     setImportModalOpen(true);
   };
 
+  const handleDownloadEmployeeListPdf = async () => {
+    setDownloadingEmployeeListPdf(true);
+    try {
+      const response = await EmployeeService.downloadEmployeeListPdf();
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `mitarbeiterliste_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Fehler beim Herunterladen der Mitarbeiterliste:', error);
+      setSnackbar({
+        open: true,
+        message: 'Fehler beim Herunterladen der Mitarbeiterliste.',
+        severity: 'error'
+      });
+    } finally {
+      setDownloadingEmployeeListPdf(false);
+    }
+  };
+
   const handleImportComplete = () => {
     // Mitarbeiterliste neu laden
     fetchEmployees();
@@ -866,6 +892,8 @@ const Employees = () => {
         kurse={kurse}
         handleOpenAddDialog={handleOpenAddDialog}
         handleImportExport={handleImportExport}
+        handleDownloadEmployeeListPdf={handleDownloadEmployeeListPdf}
+        downloadingEmployeeListPdf={downloadingEmployeeListPdf}
         isMobile={isMobile}
       />
 
@@ -946,4 +974,4 @@ const Employees = () => {
   );
 };
 
-export default Employees; 
+export default Employees;

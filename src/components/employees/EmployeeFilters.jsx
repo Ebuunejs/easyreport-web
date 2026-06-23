@@ -14,7 +14,8 @@ import {
 } from '@mui/material';
 import { 
   PersonAdd as PersonAddIcon,
-  ImportExport as ImportExportIcon
+  ImportExport as ImportExportIcon,
+  PictureAsPdf as PictureAsPdfIcon
 } from '@mui/icons-material';
 
 const EmployeeFilters = ({ 
@@ -36,6 +37,8 @@ const EmployeeFilters = ({
   berufe,
   handleOpenAddDialog, 
   handleImportExport,
+  handleDownloadEmployeeListPdf,
+  downloadingEmployeeListPdf,
   isMobile 
 }) => {
   return (
@@ -239,13 +242,22 @@ const EmployeeFilters = ({
           </Button>
         )}
       </Grid>
-      <Grid item xs={12} sm={12} md={1} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, mt: { xs: 1.5, md: 0 } }}>
+      <Grid
+        item
+        xs={12}
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 1,
+          justifyContent: { xs: 'flex-start', md: 'flex-end' },
+          mt: { xs: 1, md: 0 }
+        }}
+      >
         <Button
           variant="contained"
           color="primary"
           startIcon={<PersonAddIcon />}
           onClick={handleOpenAddDialog}
-          sx={{ mr: 1 }}
         >
           {isMobile ? 'Neu' : 'Neuer Mitarbeiter'}
         </Button>
@@ -256,9 +268,19 @@ const EmployeeFilters = ({
         >
           {isMobile ? 'Import' : 'Import/Export'}
         </Button>
+        <Button
+          variant="outlined"
+          color="secondary"
+          startIcon={<PictureAsPdfIcon />}
+          onClick={handleDownloadEmployeeListPdf}
+          disabled={downloadingEmployeeListPdf}
+          sx={{ whiteSpace: 'nowrap' }}
+        >
+          {isMobile ? 'PDF' : 'Mitarbeiterliste in PDF'}
+        </Button>
       </Grid>
     </Grid>
   );
 };
 
-export default EmployeeFilters; 
+export default EmployeeFilters;

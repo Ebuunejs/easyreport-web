@@ -14,6 +14,15 @@ const getEmployeeById = (id) => {
   return api.get(`/employees/${id}`);
 };
 
+const downloadEmployeeListPdf = () => {
+  return api.get('/employees-list/pdf', {
+    responseType: 'blob',
+    headers: {
+      Accept: 'application/pdf'
+    }
+  });
+};
+
 const createEmployee = (employeeData) => {
   // Sicherstellen, dass die Daten den richtigen Typ haben
   const sanitizedData = { ...employeeData };
@@ -321,6 +330,7 @@ const getEmployeeCoursesPublic = (employeeId) => {
 const EmployeeService = {
   getEmployees,
   getEmployeeById,
+  downloadEmployeeListPdf,
   createEmployee,
   updateEmployee,
   updateEmployeeWithFallback,
@@ -335,4 +345,4 @@ const EmployeeService = {
   getEmployeeCoursesPublic
 };
 
-export default EmployeeService; 
+export default EmployeeService;

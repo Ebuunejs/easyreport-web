@@ -72,7 +72,18 @@ export const login = async (email, password, slug) => {
         const response = await api.post('auth/login', { email, password }, config);
         
         console.log("response: ", response);
-        const { user, token } = response.data;
+        let responseData = response.data;
+
+        if (typeof responseData === 'string') {
+            const jsonStart = responseData.indexOf('{');
+            const jsonEnd = responseData.lastIndexOf('}');
+
+            if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                responseData = JSON.parse(responseData.slice(jsonStart, jsonEnd + 1));
+            }
+        }
+
+        const { user, token } = responseData;
         
         if (user && token) {
             // Stellen Sie sicher, dass die Rolle gesetzt ist
