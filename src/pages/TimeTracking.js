@@ -635,13 +635,20 @@ const TimeTracking = () => {
     if (!editingTimeLog) return;
 
     try {
+      const projectId = editingTimeLog.project_id || editingTimeLog.project?.id;
+
+      if (!projectId) {
+        setError('Projekt der Zeiterfassung konnte nicht ermittelt werden.');
+        return;
+      }
+
       await timeLogService.updateTimeLog(editingTimeLog.employee_id, editingTimeLog.id, {
-        project_id: 1, // Default-Projekt
+        project_id: projectId,
         date: editTimeLog.date,
         start_time: editTimeLog.startTime,
         end_time: editTimeLog.endTime,
         break_duration: parseInt(editTimeLog.breakTime),
-        description: editTimeLog.notes
+        description: editTimeLog.notes || ''
       });
 
       // Zeiterfassungen neu laden
