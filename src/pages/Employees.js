@@ -494,10 +494,23 @@ const Employees = () => {
     setImportModalOpen(true);
   };
 
+  const getEmployeeListFilters = () => {
+    const filters = { role: 'employee' };
+
+    if (companyFilter) filters.company_id = companyFilter;
+    if (berufeFilter) filters.profession_id = berufeFilter;
+    if (kurseFilter) filters.position_id = kurseFilter;
+    if (selectedTags && selectedTags.length > 0) filters.bildungs_tag_ids = selectedTags;
+    if (statusFilter !== 'all') filters.is_active = statusFilter === 'active' ? 1 : 0;
+    if (searchTerm.trim()) filters.search = searchTerm.trim();
+
+    return filters;
+  };
+
   const handleDownloadEmployeeListPdf = async () => {
     setDownloadingEmployeeListPdf(true);
     try {
-      const response = await EmployeeService.downloadEmployeeListPdf();
+      const response = await EmployeeService.downloadEmployeeListPdf(getEmployeeListFilters());
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');

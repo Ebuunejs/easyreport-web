@@ -14,8 +14,9 @@ const getEmployeeById = (id) => {
   return api.get(`/employees/${id}`);
 };
 
-const downloadEmployeeListPdf = () => {
+const downloadEmployeeListPdf = (filters = {}) => {
   return api.get('/employees-list/pdf', {
+    params: { ...filters },
     responseType: 'blob',
     headers: {
       Accept: 'application/pdf'
