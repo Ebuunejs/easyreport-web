@@ -42,7 +42,6 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Language as LanguageIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
   CloudUpload as UploadIcon,
@@ -50,13 +49,38 @@ import {
   KeyboardArrowDown as ArrowDownIcon
 } from '@mui/icons-material';
 import api from '../api/axios';
-import { API_URL } from '../config';
-import config from '../config';
 import { useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-//// Verwendung der backendUrl
-const BASE_URL = config.backendUrl;
+
+const getApiOrigin = () => {
+  try {
+    return new URL(api.defaults.baseURL).origin;
+  } catch (_) {
+    return window.location.origin;
+  }
+};
+
+const resolveLogoUrl = (logo) => {
+  if (!logo || typeof logo !== 'string') return null;
+
+  const apiOrigin = getApiOrigin();
+
+  if (/^https?:\/\//i.test(logo)) {
+    try {
+      const url = new URL(logo);
+      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+        return `${apiOrigin}${url.pathname}`;
+      }
+      return logo;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  const normalizedPath = logo.startsWith('/') ? logo : `/${logo}`;
+  return `${apiOrigin}${normalizedPath}`;
+};
 
 const Companies = () => {
   const [companies, setCompanies] = useState([]);
@@ -370,7 +394,7 @@ const Companies = () => {
                         height: 36
                       }}
                       alt={company.name}
-                      src={company.logo ? `${BASE_URL}${company.logo}` : null}
+                      src={resolveLogoUrl(company.logo)}
                     >
                      {company.name.charAt(0)}
                     </Avatar>
@@ -623,7 +647,7 @@ const Companies = () => {
             {editCompany?.logo && typeof editCompany.logo === 'object' ? (
               <Avatar src={URL.createObjectURL(editCompany.logo)} alt="Logo" sx={{ width: 56, height: 56 }} />
             ) : editCompany?.logo ? (
-              <Avatar src={typeof editCompany.logo === 'string' ? `${BASE_URL}${editCompany.logo}` : editCompany.logo} alt="Logo" sx={{ width: 56, height: 56 }} />
+              <Avatar src={resolveLogoUrl(editCompany.logo)} alt="Logo" sx={{ width: 56, height: 56 }} />
             ) : null}
             <TextField name="name" label="Name" value={editCompany?.name || ''} onChange={handleEditInputChange} fullWidth required />
             <TextField name="email" label="E-Mail" value={editCompany?.email || ''} onChange={handleEditInputChange} fullWidth />
@@ -802,7 +826,7 @@ const CompanyDetail = ({ company, onClose }) => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Avatar 
                             sx={{ bgcolor: 'white' }}
-                            src={parentCompany.logo ? `${BASE_URL}${parentCompany.logo}` : null}
+                            src={resolveLogoUrl(parentCompany.logo)}
                           >
                             {parentCompany.name.charAt(0)}
                           </Avatar>
@@ -835,7 +859,7 @@ const CompanyDetail = ({ company, onClose }) => {
                             <Paper sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                               <Avatar 
                                 sx={{ bgcolor: 'white', width: 32, height: 32 }}
-                                src={sub.logo ? `${BASE_URL}${sub.logo}` : null}
+                                src={resolveLogoUrl(sub.logo)}
                               >
                                 {sub.name.charAt(0)}
                               </Avatar>
