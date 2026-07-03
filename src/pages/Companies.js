@@ -65,10 +65,17 @@ const resolveLogoUrl = (logo) => {
   if (!logo || typeof logo !== 'string') return null;
 
   const apiOrigin = getApiOrigin();
+  const toLogoEndpoint = (pathname) => {
+    const match = pathname.match(/\/storage\/logos\/([^/?#]+)$/i);
+    return match ? `${api.defaults.baseURL}/public/company-logos/${encodeURIComponent(match[1])}` : null;
+  };
 
   if (/^https?:\/\//i.test(logo)) {
     try {
       const url = new URL(logo);
+      const logoEndpoint = toLogoEndpoint(url.pathname);
+      if (logoEndpoint) return logoEndpoint;
+
       if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
         return `${apiOrigin}${url.pathname}`;
       }
@@ -79,6 +86,9 @@ const resolveLogoUrl = (logo) => {
   }
 
   const normalizedPath = logo.startsWith('/') ? logo : `/${logo}`;
+  const logoEndpoint = toLogoEndpoint(normalizedPath);
+  if (logoEndpoint) return logoEndpoint;
+
   return `${apiOrigin}${normalizedPath}`;
 };
 
@@ -276,17 +286,19 @@ const Companies = () => {
   const handleEditSave = async () => {
     try {
       const formData = new FormData();
-      
-      // Alle Felder außer isSubcompany (das ist nur für die UI)
-      Object.entries(editCompany).forEach(([key, value]) => {
+
+      ['name', 'address', 'zip', 'city', 'email', 'phone', 'website', 'token', 'status', 'subcontractor'].forEach((key) => {
+        const value = editCompany[key];
         if (key === 'status') {
           formData.append('status', value ? '1' : '0');
-        } else if (key === 'isSubcompany' || key === 'employee_count' || key === 'employees') {
-          // Überspringen, da diese nur im Frontend verwendet werden
         } else if (value !== null && value !== undefined) {
           formData.append(key, value);
         }
       });
+
+      if (editCompany.logo instanceof File) {
+        formData.append('logo', editCompany.logo);
+      }
       
       // Wenn die Firma kein Subunternehmen mehr sein soll, setze subcontractor auf null
       if (!editCompany.isSubcompany) {
