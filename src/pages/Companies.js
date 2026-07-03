@@ -82,6 +82,28 @@ const resolveLogoUrl = (logo) => {
   return `${apiOrigin}${normalizedPath}`;
 };
 
+const blurActiveElement = () => {
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+};
+
+const getCompanyAvatarSx = (size) => ({
+  bgcolor: 'primary.main',
+  color: 'primary.contrastText',
+  width: size,
+  height: size,
+  fontWeight: 700,
+  border: '1px solid',
+  borderColor: 'divider',
+  '& img': {
+    objectFit: 'contain',
+    boxSizing: 'border-box',
+    padding: '4px',
+    backgroundColor: '#fff'
+  }
+});
+
 const Companies = () => {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -134,6 +156,7 @@ const Companies = () => {
   };
 
   const handleOpenDialog = () => {
+    blurActiveElement();
     setOpenDialog(true);
   };
 
@@ -221,6 +244,7 @@ const Companies = () => {
   };
 
   const handleEditClick = (company) => {
+    blurActiveElement();
     setEditCompany({
       ...company,
       isSubcompany: company.subcontractor !== null
@@ -282,6 +306,7 @@ const Companies = () => {
   };
 
   const handleAddMenuClick = (event) => {
+    blurActiveElement();
     setAddMenuAnchor(event.currentTarget);
   };
 
@@ -290,6 +315,7 @@ const Companies = () => {
   };
 
   const handleAddMainCompany = () => {
+    blurActiveElement();
     setNewCompany({
       ...newCompany,
       isSubcompany: false,
@@ -300,6 +326,7 @@ const Companies = () => {
   };
 
   const handleAddSubcompany = () => {
+    blurActiveElement();
     setNewCompany({
       ...newCompany,
       isSubcompany: true
@@ -384,19 +411,18 @@ const Companies = () => {
                     cursor: 'pointer',
                     '&:hover': { backgroundColor: theme.palette.action.hover }
                   }}
-                  onClick={() => setSelectedCompany(company)}
+                  onClick={() => {
+                    blurActiveElement();
+                    setSelectedCompany(company);
+                  }}
                 >
                   <TableCell>
                     <Avatar 
-                      sx={{ 
-                        bgcolor: 'white',
-                        width: 36, 
-                        height: 36
-                      }}
+                      sx={getCompanyAvatarSx(36)}
                       alt={company.name}
                       src={resolveLogoUrl(company.logo)}
                     >
-                     {company.name.charAt(0)}
+                      {company.name?.charAt(0) || <BusinessIcon fontSize="small" />}
                     </Avatar>
                   </TableCell>
                   <TableCell>
@@ -558,7 +584,7 @@ const Companies = () => {
               <Avatar
                 src={URL.createObjectURL(newCompany.logo)}
                 alt="Logo"
-                sx={{ width: 56, height: 56 }}
+                sx={getCompanyAvatarSx(56)}
               />
             )}
             <TextField name="name" label="Name" value={newCompany.name} onChange={handleInputChange} fullWidth required />
@@ -645,9 +671,9 @@ const Companies = () => {
               <input type="file" hidden accept="image/*" onChange={handleEditLogoChange} />
             </Button>
             {editCompany?.logo && typeof editCompany.logo === 'object' ? (
-              <Avatar src={URL.createObjectURL(editCompany.logo)} alt="Logo" sx={{ width: 56, height: 56 }} />
+              <Avatar src={URL.createObjectURL(editCompany.logo)} alt="Logo" sx={getCompanyAvatarSx(56)} />
             ) : editCompany?.logo ? (
-              <Avatar src={resolveLogoUrl(editCompany.logo)} alt="Logo" sx={{ width: 56, height: 56 }} />
+              <Avatar src={resolveLogoUrl(editCompany.logo)} alt="Logo" sx={getCompanyAvatarSx(56)} />
             ) : null}
             <TextField name="name" label="Name" value={editCompany?.name || ''} onChange={handleEditInputChange} fullWidth required />
             <TextField name="email" label="E-Mail" value={editCompany?.email || ''} onChange={handleEditInputChange} fullWidth />
@@ -825,10 +851,10 @@ const CompanyDetail = ({ company, onClose }) => {
                       {parentCompany ? (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Avatar 
-                            sx={{ bgcolor: 'white' }}
+                            sx={getCompanyAvatarSx(40)}
                             src={resolveLogoUrl(parentCompany.logo)}
                           >
-                            {parentCompany.name.charAt(0)}
+                            {parentCompany.name?.charAt(0) || <BusinessIcon fontSize="small" />}
                           </Avatar>
                           <Typography>{parentCompany.name}</Typography>
                         </Box>
@@ -858,10 +884,10 @@ const CompanyDetail = ({ company, onClose }) => {
                           <Grid item xs={12} sm={6} md={4} key={sub.id}>
                             <Paper sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                               <Avatar 
-                                sx={{ bgcolor: 'white', width: 32, height: 32 }}
+                                sx={getCompanyAvatarSx(32)}
                                 src={resolveLogoUrl(sub.logo)}
                               >
-                                {sub.name.charAt(0)}
+                                {sub.name?.charAt(0) || <BusinessIcon fontSize="small" />}
                               </Avatar>
                               <Typography variant="body2">{sub.name}</Typography>
                             </Paper>
