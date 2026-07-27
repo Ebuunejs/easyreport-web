@@ -800,9 +800,8 @@ const CompanyDetail = ({ company, onClose }) => {
         )}
         {activeTab === 1 && (
           <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <Box sx={{ mb: 2 }}>
               <Typography variant="h6">Mitarbeiter</Typography>
-              <Button variant="contained">Mitarbeiter hinzufügen</Button>
             </Box>
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -815,7 +814,6 @@ const CompanyDetail = ({ company, onClose }) => {
                     <TableCell>Name</TableCell>
                     <TableCell>E-Mail</TableCell>
                     <TableCell>Position</TableCell>
-                    <TableCell>Aktionen</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -825,15 +823,11 @@ const CompanyDetail = ({ company, onClose }) => {
                         <TableCell>{emp.user?.name || emp.name || '-'}</TableCell>
                         <TableCell>{emp.user?.email || emp.email || '-'}</TableCell>
                         <TableCell>{emp.position || '-'}</TableCell>
-                        <TableCell>
-                          <Button size="small">Bearbeiten</Button>
-                          <Button size="small" color="error">Löschen</Button>
-                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} align="center">
+                      <TableCell colSpan={3} align="center">
                         Keine Mitarbeiter gefunden
                       </TableCell>
                     </TableRow>
