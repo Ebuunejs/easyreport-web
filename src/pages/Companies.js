@@ -873,15 +873,8 @@ const CompanyDetail = ({ company, onClose }) => {
                 
                 <Grid item xs={12}>
                   <Paper sx={{ p: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Box sx={{ mb: 2 }}>
                       <Typography variant="h6">Subunternehmen</Typography>
-                      <Button 
-                        variant="contained" 
-                        size="small"
-                        startIcon={<AddIcon />}
-                      >
-                        Subunternehmen hinzufügen
-                      </Button>
                     </Box>
                     
                     {subcompanies.length > 0 ? (
