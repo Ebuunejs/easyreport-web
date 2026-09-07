@@ -30,7 +30,8 @@ import {
 import {
   Description as DescriptionIcon,
   GetApp as GetAppIcon,
-  Send as SendIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
   Person as PersonIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon
@@ -38,7 +39,7 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
 import api from '../api/axios';
 
@@ -46,6 +47,13 @@ import api from '../api/axios';
 const Reports = () => {
   const [tabValue, setTabValue] = useState(0);
   const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState('');
+  const [hourlyRate, setHourlyRate] = useState('');
+  const [monthlySalary, setMonthlySalary] = useState('');
+  const [expenses, setExpenses] = useState([]);
+  const [payrollPreview, setPayrollPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [reportType, setReportType] = useState('');
   const [startDate, setStartDate] = useState(startOfMonth(new Date()));
   const [endDate, setEndDate] = useState(endOfMonth(new Date()));
@@ -61,8 +69,64 @@ const Reports = () => {
   // Lade Mitarbeiter beim Komponenten-Mount
   useEffect(() => {
     loadEmployees();
+    loadCompanies();
     loadReports();
   }, []);
+
+  const isPayroll = ['fixed_payroll', 'hourly_payroll'].includes(reportType);
+  const validDates = isValid(startDate) && isValid(endDate) && startDate <= endDate;
+
+  useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, monthlySalary, expenses, description]);
+
+  const loadCompanies = async () => {
+    try {
+      const response = await api.get('/companies');
+      setCompanies(response.data.data || response.data);
+    } catch (_) {
+      setError('Firmen konnten nicht geladen werden. Bitte laden Sie die Seite erneut.');
+    }
+  };
+
+  const selectEmployee = (id) => {
+    const employee = employees.find(item => String(item.id) === String(id));
+    setSelectedEmployee(id);
+    setSelectedCompany(employee?.company_id || '');
+    setHourlyRate(employee?.hourly_rate == null ? '' : String(employee.hourly_rate));
+    setMonthlySalary('');
+    setExpenses([]);
+  };
+
+  const buildReportData = () => ({
+    employee_id: selectedEmployee,
+    company_id: selectedCompany || null,
+    report_type: reportType,
+    start_date: format(startDate, 'yyyy-MM-dd'),
+    end_date: format(endDate, 'yyyy-MM-dd'),
+    description,
+    ...(isPayroll ? {
+      ...(reportType === 'hourly_payroll' ? { hourly_rate: hourlyRate.replace(',', '.') } : { monthly_salary: monthlySalary.replace(',', '.') }),
+      expenses: expenses.map(expense => ({ name: expense.name.trim(), amount: expense.amount.replace(',', '.') })),
+    } : {}),
+  });
+
+  const showRequestError = (err) => setError(
+    Object.values(err.response?.data?.errors || {}).flat().join(' ') || err.response?.data?.message || 'Der Bericht konnte nicht erstellt werden.'
+  );
+
+  const calculatePayroll = async () => {
+    setPreviewLoading(true);
+    setError(null);
+    setPayrollPreview(null);
+    try {
+      const response = await api.post('/reports/payroll-preview', buildReportData());
+      setPayrollPreview(response.data.data);
+    } catch (err) {
+      showRequestError(err);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+  const money = value => new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF' }).format(value);
 
   const loadEmployees = async () => {
     try {
@@ -99,15 +163,7 @@ const Reports = () => {
     setSuccess(null);
 
     try {
-      const reportData = {
-        employee_id: selectedEmployee,
-        report_type: reportType,
-        start_date: format(startDate, 'yyyy-MM-dd'),
-        end_date: format(endDate, 'yyyy-MM-dd'),
-        description: description
-      };
-
-      const response = await api.post('/reports', reportData);
+      await api.post('/reports', buildReportData());
       
       setSuccess('Bericht erfolgreich generiert!');
       loadReports(); // Lade Berichte neu
@@ -116,10 +172,13 @@ const Reports = () => {
       setSelectedEmployee('');
       setReportType('');
       setDescription('');
+      setSelectedCompany('');
+      setExpenses([]);
+      setPayrollPreview(null);
       
     } catch (error) {
       console.error('Fehler beim Generieren des Berichts:', error);
-      setError('Fehler beim Generieren des Berichts: ' + (error.response?.data?.message || error.message));
+      showRequestError(error);
     } finally {
       setLoading(false);
     }
@@ -164,7 +223,9 @@ const Reports = () => {
       'vacation': 'Urlaubsbericht',
       'sick_leave': 'Krankheitsbericht',
       'project_summary': 'Projektzusammenfassung',
-      'employee_summary': 'Mitarbeiterzusammenfassung'
+      'employee_summary': 'Mitarbeiterzusammenfassung',
+      'fixed_payroll': 'Fixlohnabrechnung',
+      'hourly_payroll': 'Stundenlohnabrechnung'
     };
     return labels[type] || type;
   };
@@ -300,12 +361,12 @@ const Reports = () => {
         
         {tabValue === 1 && (
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }} component="fieldset" disabled={loading || previewLoading} sx={{ border: 0, minWidth: 0, m: 0 }}>
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Mitarbeiter</InputLabel>
                 <Select
                   value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
+                  onChange={(e) => selectEmployee(e.target.value)}
                   label="Mitarbeiter"
                   startAdornment={<PersonIcon sx={{ mr: 1 }} />}
                   disabled={employees.length === 0}
@@ -324,13 +385,31 @@ const Reports = () => {
                 </Select>
               </FormControl>
 
+              <FormControl fullWidth sx={{ mb: 2 }} required={isPayroll}>
+                <InputLabel id="report-company-label">Firma</InputLabel>
+                <Select labelId="report-company-label" label="Firma" value={selectedCompany}
+                  onChange={event => setSelectedCompany(event.target.value)}>
+                  <MenuItem value="">Bitte Firma auswählen</MenuItem>
+                  {companies.map(company => <MenuItem key={company.id} value={company.id}>{company.name}</MenuItem>)}
+                </Select>
+              </FormControl>
+
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Berichtstyp</InputLabel>
                 <Select
                   value={reportType}
-                  onChange={(e) => setReportType(e.target.value)}
+                  onChange={(e) => {
+                    setReportType(e.target.value);
+                    if (['fixed_payroll', 'hourly_payroll'].includes(e.target.value)) {
+                      const date = isValid(startDate) ? startDate : new Date();
+                      setStartDate(startOfMonth(date));
+                      setEndDate(endOfMonth(date));
+                    }
+                  }}
                   label="Berichtstyp"
                 >
+                  <MenuItem value="fixed_payroll">Fixlohnabrechnung</MenuItem>
+                  <MenuItem value="hourly_payroll">Stundenlohnabrechnung</MenuItem>
                   <MenuItem value="hours">Stundenbericht</MenuItem>
                   <MenuItem value="vacation">Urlaubsbericht</MenuItem>
                   <MenuItem value="sick_leave">Krankheitsbericht</MenuItem>
@@ -340,7 +419,11 @@ const Reports = () => {
               </FormControl>
               
               <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={de}>
-                <Box sx={{ display: 'flex', mb: 2 }}>
+                {isPayroll ? <DatePicker
+                  label="Abrechnungsmonat" views={['year', 'month']} value={startDate}
+                  onChange={date => { setStartDate(isValid(date) ? startOfMonth(date) : date); setEndDate(isValid(date) ? endOfMonth(date) : date); }}
+                  slotProps={{ textField: { fullWidth: true, sx: { mb: 2 } } }}
+                /> : <Box sx={{ display: 'flex', mb: 2 }}>
                   <DatePicker
                     label="Startdatum"
                     value={startDate}
@@ -357,8 +440,33 @@ const Reports = () => {
                       textField: { sx: { flex: 1 } }
                     }}
                   />
-                </Box>
+                </Box>}
               </LocalizationProvider>
+
+              {isPayroll && <Box sx={{ mb: 2 }}>
+                <TextField fullWidth required sx={{ mb: 2 }}
+                  label={reportType === 'hourly_payroll' ? 'Stundenlohn (CHF)' : 'Monatlicher Fixlohn (CHF)'}
+                  value={reportType === 'hourly_payroll' ? hourlyRate : monthlySalary}
+                  onChange={event => reportType === 'hourly_payroll' ? setHourlyRate(event.target.value) : setMonthlySalary(event.target.value)}
+                  inputProps={{ inputMode: 'decimal' }}
+                  helperText={reportType === 'hourly_payroll' ? 'Vorbelegt aus dem Mitarbeiter. Es zählen nur genehmigte Stunden des Monats.' : 'Bruttolohn für den ausgewählten Monat.'} />
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>Spesen</Typography>
+                {expenses.map((expense, index) => <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                  <TextField label="Bezeichnung" value={expense.name} inputProps={{ maxLength: 255 }}
+                    onChange={event => setExpenses(current => current.map((item, i) => i === index ? { ...item, name: event.target.value } : item))} />
+                  <TextField label="Betrag (CHF)" value={expense.amount} inputProps={{ inputMode: 'decimal' }}
+                    onChange={event => setExpenses(current => current.map((item, i) => i === index ? { ...item, amount: event.target.value } : item))} />
+                  <IconButton aria-label={`Spesen ${index + 1} löschen`} color="error" onClick={() => setExpenses(current => current.filter((_, i) => i !== index))}><DeleteIcon /></IconButton>
+                </Box>)}
+                <Button startIcon={<AddIcon />} onClick={() => setExpenses(current => [...current, { name: '', amount: '' }])}>Spesen hinzufügen</Button>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                  Die Abzüge aus Organisation → Lohnabrechnungen werden angewendet. Prozentwerte beziehen sich auf den Bruttolohn. Spesen werden zum Nettolohn addiert.
+                </Typography>
+                <Button sx={{ mt: 2 }} variant="outlined" onClick={calculatePayroll}
+                  disabled={loading || previewLoading || !selectedEmployee || !selectedCompany || !validDates}>
+                  {previewLoading ? 'Berechne …' : 'Lohnabrechnung berechnen'}
+                </Button>
+              </Box>}
               
               <TextField
                 fullWidth
@@ -376,7 +484,7 @@ const Reports = () => {
                 color="primary"
                 startIcon={loading ? <CircularProgress size={20} /> : <DescriptionIcon />}
                 onClick={handleGenerateReport}
-                disabled={loading || !selectedEmployee || !reportType}
+                disabled={loading || previewLoading || !selectedEmployee || !reportType || !validDates || (isPayroll && !selectedCompany)}
                 sx={{ mt: 2 }}
                 fullWidth
               >
@@ -384,7 +492,7 @@ const Reports = () => {
               </Button>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Paper elevation={0} variant="outlined" sx={{ p: 2, height: '100%' }}>
                 <Typography variant="h6" gutterBottom>
                   Berichtsvorschau
@@ -400,8 +508,8 @@ const Reports = () => {
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
                       <strong>Mitarbeiter:</strong> {
-                        employees.find(emp => emp.id == selectedEmployee)?.user ? 
-                        `${employees.find(emp => emp.id == selectedEmployee).user.name} ${employees.find(emp => emp.id == selectedEmployee).user.surname}` :
+                        employees.find(emp => String(emp.id) === String(selectedEmployee))?.user ?
+                        `${employees.find(emp => String(emp.id) === String(selectedEmployee)).user.name} ${employees.find(emp => String(emp.id) === String(selectedEmployee)).user.surname}` :
                         `Mitarbeiter ${selectedEmployee}`
                       }
                     </Typography>
@@ -409,8 +517,23 @@ const Reports = () => {
                       <strong>Berichtstyp:</strong> {getReportTypeLabel(reportType)}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Zeitraum:</strong> {format(startDate, 'dd.MM.yyyy')} - {format(endDate, 'dd.MM.yyyy')}
+                      <strong>Zeitraum:</strong> {validDates ? `${format(startDate, 'dd.MM.yyyy')} - ${format(endDate, 'dd.MM.yyyy')}` : 'Bitte gültigen Zeitraum wählen'}
                     </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}><strong>Firma:</strong> {companies.find(company => String(company.id) === String(selectedCompany))?.name || 'Nicht ausgewählt'}</Typography>
+                    {payrollPreview && <Box sx={{ mt: 2 }}>
+                      {reportType === 'hourly_payroll' && <Typography>Genehmigte Stunden: {payrollPreview.total_hours}</Typography>}
+                      <Table size="small" aria-label="Lohnberechnung"><TableBody>
+                        <TableRow><TableCell>Bruttolohn</TableCell><TableCell align="right">{money(payrollPreview.gross_salary)}</TableCell></TableRow>
+                        {payrollPreview.deductions.map((item, index) => <TableRow key={index}><TableCell>{item.name} ({Number(item.value)} {item.unit === 'percent' ? '%' : 'CHF'})</TableCell><TableCell align="right">−{money(item.amount)}</TableCell></TableRow>)}
+                        <TableRow><TableCell>Total Abzüge</TableCell><TableCell align="right">−{money(payrollPreview.total_deductions)}</TableCell></TableRow>
+                        <TableRow><TableCell><strong>Nettolohn</strong></TableCell><TableCell align="right"><strong>{money(payrollPreview.net_salary)}</strong></TableCell></TableRow>
+                        {payrollPreview.expenses.map((item, index) => <TableRow key={index}><TableCell>Spesen: {item.name}</TableCell><TableCell align="right">{money(item.amount)}</TableCell></TableRow>)}
+                        <TableRow><TableCell>Total Spesen</TableCell><TableCell align="right">{money(payrollPreview.total_expenses)}</TableCell></TableRow>
+                        <TableRow><TableCell><strong>Auszahlungsbetrag</strong></TableCell><TableCell align="right"><strong>{money(payrollPreview.payout)}</strong></TableCell></TableRow>
+                      </TableBody></Table>
+                      {payrollPreview.deductions.length === 0 && <Alert severity="info" sx={{ mt: 2 }}>Es sind keine Abzüge hinterlegt.</Alert>}
+                      {reportType === 'hourly_payroll' && payrollPreview.total_hours === 0 && <Alert severity="info" sx={{ mt: 2 }}>Keine genehmigten Stunden in diesem Monat vorhanden.</Alert>}
+                    </Box>}
                     {description && (
                       <Typography variant="body2">
                         <strong>Beschreibung:</strong> {description}
@@ -457,16 +580,8 @@ const Reports = () => {
         </DialogTitle>
         <DialogContent>
           {previewData ? (
-            <Box 
-              sx={{ 
-                border: '1px solid #ddd', 
-                borderRadius: 1, 
-                p: 2,
-                backgroundColor: '#fff',
-                minHeight: '500px'
-              }}
-              dangerouslySetInnerHTML={{ __html: previewData }}
-            />
+            <Box component="iframe" title="Berichtsvorschau" sandbox="" srcDoc={previewData}
+              sx={{ border: '1px solid #ddd', borderRadius: 1, width: '100%', height: '70vh', minHeight: 500, backgroundColor: '#fff' }} />
           ) : (
             <Typography>Lade Vorschau...</Typography>
           )}

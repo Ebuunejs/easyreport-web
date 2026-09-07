@@ -39,13 +39,16 @@ import BaustellenModal from '../components/organization/BaustellenModal';
 import QualifikationenModal from '../components/organization/QualifikationenModal';
 import DokumentTypenModal from '../components/organization/DokumentTypenModal';
 
+import LohnabrechnungenTab from '../components/organization/LohnabrechnungenTab';
+
 // Tab-Konstanten
 const TABS = {
   PROJECTS: 0,
   DEPARTMENTS: 1,
   POSITIONS: 2,
   BILDUNGS_TAGS: 3,
-  DOCUMENT_TYPES: 4
+  DOCUMENT_TYPES: 4,
+  PAYROLL: 5
 };
 
 const OrganizationManagement = () => {
@@ -705,12 +708,13 @@ const OrganizationManagement = () => {
         Organisationsverwaltung
       </Typography>
       
-      <Tabs value={activeTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Tabs variant="scrollable" scrollButtons="auto" value={activeTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tab label="Baustellen" id="tab-0" />
         <Tab label="Berufe" id="tab-1" />
         <Tab label="Kurse" id="tab-2" />
         <Tab label="Qualifikationen" id="tab-3" />
         <Tab label="Dokumenttypen" id="tab-4" />
+        <Tab label="Lohnabrechnungen" id="tab-5" />
       </Tabs>
       
       {/* Projekte/Baustellen */}
@@ -882,6 +886,8 @@ const OrganizationManagement = () => {
         </Paper>
       )}
       
+      {activeTab === TABS.PAYROLL && <LohnabrechnungenTab />}
+
       {/* Modals/Dialoge */}
       <BerufeModal 
         open={openDeptDialog}

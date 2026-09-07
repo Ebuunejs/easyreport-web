@@ -17,9 +17,26 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/easyreport/web
-            git pull origin main
+            set -e
+
+            APP_DIR=/var/www/easyreport/web
+            RELEASES_DIR=/var/www/easyreport/web-releases
+            RELEASE_DIR="$RELEASES_DIR/${{ github.sha }}"
+
+            cd "$APP_DIR"
+            git pull --ff-only origin main
             npm install
-            npm run build
+
+            mkdir -p "$RELEASE_DIR"
+            BUILD_PATH="$RELEASE_DIR" npm run build
+            test -f "$RELEASE_DIR/index.html"
+
             nginx -t
+
+            ln -sfn "$RELEASE_DIR" "$APP_DIR/build.next"
+            if [ -d "$APP_DIR/build" ] && [ ! -L "$APP_DIR/build" ]; then
+              mv "$APP_DIR/build" "$RELEASES_DIR/initial-build"
+            fi
+            mv -Tf "$APP_DIR/build.next" "$APP_DIR/build"
+
             systemctl reload nginx
