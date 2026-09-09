@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 import Reports from './Reports';
 import api from '../api/axios';
 
-jest.mock('../api/axios', () => ({ get: jest.fn(), post: jest.fn() }));
+jest.mock('../api/axios', () => ({ get: jest.fn(), post: jest.fn(), put: jest.fn(), delete: jest.fn() }));
 jest.mock('@mui/x-date-pickers/DatePicker', () => ({ DatePicker: () => <div>Datumswahl</div> }));
 jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({ LocalizationProvider: ({ children }) => children }));
 
@@ -63,4 +63,58 @@ test('fixed payroll submits monthly salary and company', async () => {
   expect(api.post).toHaveBeenCalledWith('/reports', expect.objectContaining({
     report_type: 'fixed_payroll', monthly_salary: '5000', company_id: 2, expenses: [],
   }));
+});
+
+const savedReport = {
+  id: 42, employee_id: 1, report_type: 'fixed_payroll', status: 'generated',
+  start_date: '2026-08-01', end_date: '2026-08-31', report_date: '2026-09-09',
+  created_at: '2026-09-09T10:00:00', generated_at: '2026-09-09T10:00:00',
+  description: 'Original', pdf_path: 'reports/original.pdf',
+  employee: { company_id: 2, user: { name: 'Erika', surname: 'Muster' } },
+  report_data: { company_id: 2, monthly_salary: 5000, expenses: [{ name: 'Fahrtspesen', amount: 25.5 }] },
+};
+
+function mockSavedReports() {
+  const fallback = api.get.getMockImplementation();
+  api.get.mockImplementation((url, config) => {
+    if (url === '/reports') return Promise.resolve({ data: { data: [savedReport], total: 11 } });
+    if (url === '/reports/42') return Promise.resolve({ data: savedReport });
+    return fallback(url, config);
+  });
+}
+
+test('pagination exposes other pages and edit saves the existing report', async () => {
+  mockSavedReports();
+  api.put.mockResolvedValue({ data: savedReport });
+  render(<Reports />);
+  await screen.findByText('11 Berichte');
+  fireEvent.click(screen.getByRole('button', { name: 'Nächste Seite' }));
+  await waitFor(() => expect(api.get).toHaveBeenCalledWith('/reports', expect.objectContaining({ params: expect.objectContaining({ page: 2 }) })));
+  fireEvent.click(await screen.findByRole('button', { name: 'Bearbeiten' }));
+  expect(await screen.findByLabelText(/Monatlicher Fixlohn/)).toHaveValue('5000');
+  expect(screen.getByLabelText('Bezeichnung')).toHaveValue('Fahrtspesen');
+  fireEvent.change(screen.getByLabelText(/Monatlicher Fixlohn/), { target: { value: '5500' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Änderungen speichern' }));
+  await screen.findByText('Bericht und PDF erfolgreich aktualisiert!');
+  expect(api.put).toHaveBeenCalledWith('/reports/42', expect.objectContaining({ monthly_salary: '5500', company_id: 2 }));
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+test('deletion requires confirmation and refreshes the list', async () => {
+  mockSavedReports();
+  api.delete.mockResolvedValue({});
+  render(<Reports />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Löschen' }));
+  expect(api.delete).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Endgültig löschen' }));
+  await screen.findByText('Bericht gelöscht.');
+  expect(api.delete).toHaveBeenCalledWith('/reports/42');
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+});
+
+test('list refresh failures are shown rather than silently leaving stale data', async () => {
+  const fallback = api.get.getMockImplementation();
+  api.get.mockImplementation((url, config) => url === '/reports' ? Promise.reject(new Error('Network')) : fallback(url, config));
+  render(<Reports />);
+  expect(await screen.findByText(/Berichtsliste konnte nicht aktualisiert/)).toBeInTheDocument();
 });

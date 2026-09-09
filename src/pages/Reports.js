@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -16,6 +16,7 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TablePagination,
   TableHead,
   TableRow,
   Alert,
@@ -31,6 +32,7 @@ import {
   Description as DescriptionIcon,
   GetApp as GetAppIcon,
   Add as AddIcon,
+  Edit as EditIcon,
   Delete as DeleteIcon,
   Person as PersonIcon,
   Visibility as VisibilityIcon,
@@ -60,6 +62,13 @@ const Reports = () => {
   const [description, setDescription] = useState('');
   const [employees, setEmployees] = useState([]);
   const [reports, setReports] = useState([]);
+  const [reportPage, setReportPage] = useState(0);
+  const [reportTotal, setReportTotal] = useState(0);
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState('');
+  const [editingReport, setEditingReport] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const listRequest = useRef(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -139,17 +148,80 @@ const Reports = () => {
     }
   };
 
-  const loadReports = async () => {
+  const loadReports = async (page = 0) => {
+    const requestId = ++listRequest.current;
+    setListLoading(true);
+    setListError('');
     try {
-      const response = await api.get('/reports');
-      setReports(response.data.data || response.data);
-    } catch (error) {
-      console.error('Fehler beim Laden der Berichte:', error);
+      const response = await api.get('/reports', { params: { page: page + 1, per_page: 10, _refresh: Date.now() } });
+      if (requestId !== listRequest.current) return;
+      const data = response.data;
+      setReports(data.data || data);
+      setReportTotal(data.total ?? (data.data || data).length);
+      setReportPage(page);
+    } catch (_) {
+      if (requestId === listRequest.current) setListError('Die Berichtsliste konnte nicht aktualisiert werden. Bitte erneut laden.');
+    } finally {
+      if (requestId === listRequest.current) setListLoading(false);
     }
   };
-  
+
+  const resetForm = () => {
+    setEditingReport(null);
+    setSelectedEmployee('');
+    setSelectedCompany('');
+    setReportType('');
+    setDescription('');
+    setHourlyRate('');
+    setMonthlySalary('');
+    setExpenses([]);
+    setPayrollPreview(null);
+  };
+
+  const handleEdit = async (id) => {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const { data: report } = await api.get(`/reports/${id}`);
+      const saved = report.report_data || {};
+      setEditingReport(report.id);
+      setSelectedEmployee(report.employee_id);
+      setSelectedCompany(saved.company_id || report.employee?.company_id || '');
+      setReportType(report.report_type || 'hours');
+      setStartDate(new Date(report.start_date || report.report_date));
+      setEndDate(new Date(report.end_date || report.report_date));
+      setHourlyRate(String(saved.hourly_rate ?? ''));
+      setMonthlySalary(String(saved.monthly_salary ?? saved.gross_salary ?? ''));
+      setExpenses((saved.expenses || []).map(item => ({ name: item.name, amount: String(item.amount) })));
+      setDescription(report.description || '');
+      setTabValue(1);
+    } catch (err) {
+      showRequestError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await api.delete(`/reports/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      setSuccess('Bericht gelöscht.');
+      await loadReports(reports.length === 1 && reportPage > 0 ? reportPage - 1 : reportPage);
+    } catch (err) {
+      showRequestError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+    if (newValue === 0) loadReports(reportPage);
   };
 
   const handleGenerateReport = async () => {
@@ -163,19 +235,16 @@ const Reports = () => {
     setSuccess(null);
 
     try {
-      await api.post('/reports', buildReportData());
-      
-      setSuccess('Bericht erfolgreich generiert!');
-      loadReports(); // Lade Berichte neu
-      
-      // Formular zurücksetzen
-      setSelectedEmployee('');
-      setReportType('');
-      setDescription('');
-      setSelectedCompany('');
-      setExpenses([]);
-      setPayrollPreview(null);
-      
+      if (editingReport) {
+        await api.put(`/reports/${editingReport}`, buildReportData());
+      } else {
+        await api.post('/reports', buildReportData());
+      }
+      setSuccess(editingReport ? 'Bericht und PDF erfolgreich aktualisiert!' : 'Bericht erfolgreich generiert!');
+      resetForm();
+      setTabValue(0);
+      await loadReports(editingReport ? reportPage : 0);
+
     } catch (error) {
       console.error('Fehler beim Generieren des Berichts:', error);
       showRequestError(error);
@@ -275,11 +344,18 @@ const Reports = () => {
           variant="fullWidth"
           sx={{ mb: 3 }}
         >
-          <Tab label="Gespeicherte Berichte" />
-          <Tab label="Neuen Bericht erstellen" />
+          <Tab label="Gespeicherte Berichte" disabled={loading || previewLoading} />
+          <Tab label={editingReport ? "Bericht bearbeiten" : "Neuen Bericht erstellen"} disabled={loading || previewLoading} />
         </Tabs>
         
         {tabValue === 0 && (
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography>{reportTotal} Berichte</Typography>
+              <Button disabled={listLoading || loading} onClick={() => loadReports(reportPage)}>Aktualisieren</Button>
+            </Box>
+            {listError && <Alert severity="error" sx={{ mb: 2 }}>{listError}</Alert>}
+            {listLoading && <CircularProgress size={24} aria-label="Berichte werden geladen" />}
           <TableContainer>
             <Table>
               <TableHead>
@@ -329,7 +405,9 @@ const Reports = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                          <Button size="small" variant="outlined" startIcon={<EditIcon />} disabled={loading || listLoading} onClick={() => handleEdit(report.id)}>Bearbeiten</Button>
+                          <Button size="small" variant="outlined" color="error" startIcon={<DeleteIcon />} disabled={loading || listLoading} onClick={() => setDeleteTarget(report)}>Löschen</Button>
                           <Button
                             size="small"
                             startIcon={<VisibilityIcon />}
@@ -357,11 +435,19 @@ const Reports = () => {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination component="div" count={reportTotal} page={reportPage} rowsPerPage={10} rowsPerPageOptions={[10]}
+            onPageChange={(_, page) => loadReports(page)} labelDisplayedRows={({ from, to, count }) => `${from}–${to} von ${count}`}
+            getItemAriaLabel={type => type === 'next' ? 'Nächste Seite' : 'Vorherige Seite'}
+            disabled={listLoading || loading} />
+          </Box>
         )}
         
         {tabValue === 1 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }} component="fieldset" disabled={loading || previewLoading} sx={{ border: 0, minWidth: 0, m: 0 }}>
+              {editingReport && <Alert severity="info" sx={{ mb: 2 }}>
+                Sie bearbeiten Bericht #{editingReport}. Beim Speichern wird die PDF ersetzt. Lohnabrechnungen werden mit den aktuell genehmigten Stunden und hinterlegten Abzügen neu berechnet.
+              </Alert>}
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Mitarbeiter</InputLabel>
                 <Select
@@ -488,8 +574,9 @@ const Reports = () => {
                 sx={{ mt: 2 }}
                 fullWidth
               >
-                {loading ? 'Generiere Bericht...' : 'Bericht generieren'}
+                {loading ? 'Speichere Bericht...' : editingReport ? 'Änderungen speichern' : 'Bericht generieren'}
               </Button>
+              {editingReport && <Button sx={{ mt: 1 }} onClick={() => { resetForm(); setTabValue(0); }}>Bearbeitung abbrechen</Button>}
             </Grid>
             
             <Grid size={{ xs: 12, md: 6 }}>
@@ -563,6 +650,14 @@ const Reports = () => {
         )}
       </Paper>
 
+      <Dialog open={Boolean(deleteTarget)} onClose={() => !loading && setDeleteTarget(null)}>
+        <DialogTitle>Bericht löschen?</DialogTitle>
+        <DialogContent>Bericht #{deleteTarget?.id} ({getReportTypeLabel(deleteTarget?.report_type)}) und die zugehörige PDF werden gelöscht.</DialogContent>
+        <DialogActions>
+          <Button disabled={loading} onClick={() => setDeleteTarget(null)}>Abbrechen</Button>
+          <Button disabled={loading} color="error" onClick={handleDelete}>Endgültig löschen</Button>
+        </DialogActions>
+      </Dialog>
       {/* Vorschau Modal */}
       <Dialog 
         open={previewOpen} 
