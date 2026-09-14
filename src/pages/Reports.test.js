@@ -12,7 +12,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   api.get.mockImplementation(url => Promise.resolve({ data: url === '/companies'
     ? [{ id: 2, name: 'Muster AG' }]
-    : url === '/public/employees' ? [{ id: 1, company_id: 2, hourly_rate: '30.15', user: { name: 'Erika', surname: 'Muster' } }]
+    : url === '/employees' ? [{ id: 1, company_id: 2, hourly_rate: '30.15', user: { name: 'Erika', surname: 'Muster' } }]
       : { data: [] } }));
   api.post.mockResolvedValue({ data: { data: {
     total_hours: 8, gross_salary: 241.2, total_deductions: 12.78, net_salary: 228.42,

@@ -4,7 +4,7 @@ import { Add, Delete, Save } from '@mui/icons-material';
 import PayrollDeductionService from '../../services/PayrollDeductionService';
 
 let nextKey = 0;
-const asRow = (data = {}) => ({ key: ++nextKey, name: '', unit: 'percent', ...data, value: String(data.value ?? '') });
+const asRow = (data = {}) => ({ key: ++nextKey, booking_number: '', name: '', unit: 'percent', ...data, value: String(data.value ?? '') });
 
 export default function LohnabrechnungenTab() {
   const [rows, setRows] = useState([]);
@@ -87,6 +87,9 @@ export default function LohnabrechnungenTab() {
           {rows.length === 0 && <Typography color="text.secondary" sx={{ mb: 2 }}>Noch keine Abzüge erfasst.</Typography>}
           {rows.map((row, index) => (
             <Box component="form" key={row.key} onSubmit={event => save(event, row)} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 2 }}>
+              <TextField label="Buchungsnummer" value={row.booking_number || ''}
+                inputProps={{ maxLength: 20, 'aria-label': `Buchungsnummer ${index + 1}` }}
+                disabled={busy !== null} onChange={event => change(row.key, 'booking_number', event.target.value)} sx={{ flex: '0 1 150px' }} />
               <TextField label="Name des Abzugs" placeholder="z. B. AHV" value={row.name} required
                 inputProps={{ maxLength: 255, 'aria-label': `Name des Abzugs ${index + 1}` }}
                 disabled={busy !== null} onChange={event => change(row.key, 'name', event.target.value)} sx={{ flex: '2 1 220px' }} />

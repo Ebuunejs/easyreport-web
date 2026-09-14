@@ -53,6 +53,7 @@ const Reports = () => {
   const [selectedCompany, setSelectedCompany] = useState('');
   const [hourlyRate, setHourlyRate] = useState('');
   const [monthlySalary, setMonthlySalary] = useState('');
+  const [payoutDate, setPayoutDate] = useState('');
   const [expenses, setExpenses] = useState([]);
   const [payrollPreview, setPayrollPreview] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -85,7 +86,7 @@ const Reports = () => {
   const isPayroll = ['fixed_payroll', 'hourly_payroll'].includes(reportType);
   const validDates = isValid(startDate) && isValid(endDate) && startDate <= endDate;
 
-  useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, monthlySalary, expenses, description]);
+  useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, monthlySalary, expenses, description, payoutDate]);
 
   const loadCompanies = async () => {
     try {
@@ -99,6 +100,7 @@ const Reports = () => {
   const selectEmployee = (id) => {
     const employee = employees.find(item => String(item.id) === String(id));
     setSelectedEmployee(id);
+    setPayoutDate(employee?.payout_date?.slice(0, 10) || '');
     setSelectedCompany(employee?.company_id || '');
     setHourlyRate(employee?.hourly_rate == null ? '' : String(employee.hourly_rate));
     setMonthlySalary('');
@@ -113,6 +115,7 @@ const Reports = () => {
     end_date: format(endDate, 'yyyy-MM-dd'),
     description,
     ...(isPayroll ? {
+      payout_date: payoutDate || null,
       ...(reportType === 'hourly_payroll' ? { hourly_rate: hourlyRate.replace(',', '.') } : { monthly_salary: monthlySalary.replace(',', '.') }),
       expenses: expenses.map(expense => ({ name: expense.name.trim(), amount: expense.amount.replace(',', '.') })),
     } : {}),
@@ -139,7 +142,7 @@ const Reports = () => {
 
   const loadEmployees = async () => {
     try {
-      const response = await api.get('/public/employees');
+      const response = await api.get('/employees');
       setEmployees(response.data.data || response.data);
       console.log('Mitarbeiter geladen:', response.data.data || response.data);
     } catch (error) {
@@ -168,6 +171,7 @@ const Reports = () => {
 
   const resetForm = () => {
     setEditingReport(null);
+    setPayoutDate('');
     setSelectedEmployee('');
     setSelectedCompany('');
     setReportType('');
@@ -186,6 +190,7 @@ const Reports = () => {
       const { data: report } = await api.get(`/reports/${id}`);
       const saved = report.report_data || {};
       setEditingReport(report.id);
+      setPayoutDate(saved.payout_date || '');
       setSelectedEmployee(report.employee_id);
       setSelectedCompany(saved.company_id || report.employee?.company_id || '');
       setReportType(report.report_type || 'hours');
@@ -530,6 +535,8 @@ const Reports = () => {
               </LocalizationProvider>
 
               {isPayroll && <Box sx={{ mb: 2 }}>
+                <TextField fullWidth type="date" label="Auszahlungsdatum" value={payoutDate} onChange={event => setPayoutDate(event.target.value)}
+                  InputLabelProps={{ shrink: true }} sx={{ mb: 2 }} helperText="Aus dem Mitarbeiterprofil vorbelegt; ohne Angabe gilt die Profilvorgabe oder das Monatsende." />
                 <TextField fullWidth required sx={{ mb: 2 }}
                   label={reportType === 'hourly_payroll' ? 'Stundenlohn (CHF)' : 'Monatlicher Fixlohn (CHF)'}
                   value={reportType === 'hourly_payroll' ? hourlyRate : monthlySalary}
@@ -609,6 +616,11 @@ const Reports = () => {
                     <Typography variant="body2" sx={{ mb: 1 }}><strong>Firma:</strong> {companies.find(company => String(company.id) === String(selectedCompany))?.name || 'Nicht ausgewählt'}</Typography>
                     {payrollPreview && <Box sx={{ mt: 2 }}>
                       {reportType === 'hourly_payroll' && <Typography>Genehmigte Stunden: {payrollPreview.total_hours}</Typography>}
+                      <Typography>Versicherungsnummer: {payrollPreview.employee_insurance_number || '–'}</Typography>
+                      <Typography>Lohnklasse: {payrollPreview.employee_salary_class || '–'}</Typography>
+                      <Typography>Bankverbindung: {payrollPreview.employee_bank_name || '–'}</Typography>
+                      <Typography>Kontonummer: {payrollPreview.employee_account_number || '–'}</Typography>
+                      <Typography>Auszahlungsdatum: {payrollPreview.payout_date || '–'}</Typography>
                       <Table size="small" aria-label="Lohnberechnung"><TableBody>
                         <TableRow><TableCell>Bruttolohn</TableCell><TableCell align="right">{money(payrollPreview.gross_salary)}</TableCell></TableRow>
                         {payrollPreview.deductions.map((item, index) => <TableRow key={index}><TableCell>{item.name} ({Number(item.value)} {item.unit === 'percent' ? '%' : 'CHF'})</TableCell><TableCell align="right">−{money(item.amount)}</TableCell></TableRow>)}

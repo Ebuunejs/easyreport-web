@@ -810,6 +810,11 @@ const EditEmployeeModal = ({
                       inputProps={{ maxLength: 34 }}
                     />
                   </Grid>
+                  <Grid item xs={12} md={4}><TextField fullWidth name="insurance_number" label="Versicherungsnummer" value={employeeData.insurance_number || ''} onChange={handleInputChange} inputProps={{ maxLength: 100 }} /></Grid>
+                  <Grid item xs={12} md={4}><TextField fullWidth name="bank_name" label="Bankverbindung (Bankname)" value={employeeData.bank_name || ''} onChange={handleInputChange} inputProps={{ maxLength: 255 }} /></Grid>
+                  <Grid item xs={12} md={4}><TextField fullWidth name="account_number" label="Kontonummer" value={employeeData.account_number || ''} onChange={handleInputChange} inputProps={{ maxLength: 100 }} /></Grid>
+                  <Grid item xs={12} md={4}><TextField fullWidth name="salary_class" label="Lohnklasse / Berufsbezeichnung" value={employeeData.salary_class || ''} onChange={handleInputChange} inputProps={{ maxLength: 100 }} placeholder="z. B. Bauarbeiter B" /></Grid>
+                  <Grid item xs={12} md={4}><TextField fullWidth name="payout_date" label="Auszahlungsdatum (Vorgabe)" value={employeeData.payout_date || ''} onChange={handleInputChange} type="date" InputLabelProps={{ shrink: true }} helperText="Optional; ohne Vorgabe wird das Monatsende verwendet." /></Grid>
                 </Grid>
               </Paper>
 

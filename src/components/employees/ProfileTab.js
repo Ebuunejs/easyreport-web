@@ -73,6 +73,14 @@ const ProfileTab = ({ employee }) => {
                 secondary={`${employee.hourly_rate || 0} CHF`}
               />
             </ListItem>
+            {[
+              ['Versicherungsnummer', employee.insurance_number || employee.ahv],
+              ['Bankverbindung', employee.bank_name],
+              ['Kontonummer', employee.account_number || employee.iban],
+              ['IBAN', employee.iban],
+              ['Lohnklasse / Berufsbezeichnung', employee.salary_class || employee.position],
+              ['Auszahlungsdatum (Vorgabe)', employee.payout_date?.slice(0, 10)],
+            ].map(([label, value]) => <ListItem key={label}><ListItemText primary={label} secondary={value || '-'} /></ListItem>)}
           </List>
         </Grid>
         

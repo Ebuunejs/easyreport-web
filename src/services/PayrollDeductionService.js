@@ -6,7 +6,7 @@ const PayrollDeductionService = {
     return response.data.data;
   },
   async save(row) {
-    const payload = { name: row.name.trim(), value: row.value.replace(',', '.'), unit: row.unit };
+    const payload = { booking_number: row.booking_number?.trim() || null, name: row.name.trim(), value: row.value.replace(',', '.'), unit: row.unit };
     const response = row.id
       ? await api.put(`/payroll-deductions/${row.id}`, payload)
       : await api.post('/payroll-deductions', payload);
