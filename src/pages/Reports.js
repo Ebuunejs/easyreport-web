@@ -55,7 +55,7 @@ const Reports = () => {
   const [monthlySalary, setMonthlySalary] = useState('');
   const [payoutDate, setPayoutDate] = useState('');
   const [expenses, setExpenses] = useState([]);
-  const [advance, setAdvance] = useState('');
+  const [advances, setAdvances] = useState([]);
   const [payrollPreview, setPayrollPreview] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [reportType, setReportType] = useState('');
@@ -87,7 +87,7 @@ const Reports = () => {
   const isPayroll = ['fixed_payroll', 'hourly_payroll'].includes(reportType);
   const validDates = isValid(startDate) && isValid(endDate) && startDate <= endDate;
 
-  useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, monthlySalary, expenses, advance, description, payoutDate]);
+  useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, monthlySalary, expenses, advances, description, payoutDate]);
 
   const loadCompanies = async () => {
     try {
@@ -117,7 +117,7 @@ const Reports = () => {
     description,
     ...(isPayroll ? {
       payout_date: payoutDate || null,
-      advance: advance.replace(',', '.') || null,
+      advances: advances.map(item => ({ description: item.description.trim(), amount: item.amount.replace(',', '.') })),
       ...(reportType === 'hourly_payroll' ? { hourly_rate: hourlyRate.replace(',', '.') } : { monthly_salary: monthlySalary.replace(',', '.') }),
       expenses: expenses.map(expense => ({ name: expense.name.trim(), amount: expense.amount.replace(',', '.') })),
     } : {}),
@@ -181,7 +181,7 @@ const Reports = () => {
     setHourlyRate('');
     setMonthlySalary('');
     setExpenses([]);
-    setAdvance('');
+    setAdvances([]);
     setPayrollPreview(null);
   };
 
@@ -202,7 +202,7 @@ const Reports = () => {
       setHourlyRate(String(saved.hourly_rate ?? ''));
       setMonthlySalary(String(saved.monthly_salary ?? saved.gross_salary ?? ''));
       setExpenses((saved.expenses || []).map(item => ({ name: item.name, amount: String(item.amount) })));
-      setAdvance(saved.advance == null ? '' : String(saved.advance));
+      setAdvances((saved.advances || (saved.advance ? [{ description: 'Vorschuss', amount: saved.advance }] : [])).map(item => ({ description: item.description, amount: String(item.amount) })));
       setDescription(report.description || '');
       setTabValue(1);
     } catch (err) {
@@ -556,8 +556,15 @@ const Reports = () => {
                   <IconButton aria-label={`Spesen ${index + 1} löschen`} color="error" onClick={() => setExpenses(current => current.filter((_, i) => i !== index))}><DeleteIcon /></IconButton>
                 </Box>)}
                 <Button startIcon={<AddIcon />} onClick={() => setExpenses(current => [...current, { name: '', amount: '' }])}>Spesen hinzufügen</Button>
-                <TextField fullWidth label="Vorschuss (CHF)" value={advance} onChange={event => setAdvance(event.target.value)}
-                  inputProps={{ inputMode: 'decimal' }} sx={{ mt: 2 }} helperText="Wird nach den Spesen als Abzug vom Auszahlungsbetrag abgezogen." />
+                <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>Vorschüsse</Typography>
+                {advances.map((item, index) => <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                  <TextField label="Beschreibung" value={item.description} inputProps={{ maxLength: 255 }}
+                    onChange={event => setAdvances(current => current.map((row, i) => i === index ? { ...row, description: event.target.value } : row))} />
+                  <TextField label="Wert (CHF)" value={item.amount} inputProps={{ inputMode: 'decimal' }}
+                    onChange={event => setAdvances(current => current.map((row, i) => i === index ? { ...row, amount: event.target.value } : row))} />
+                  <IconButton aria-label={`Vorschuss ${index + 1} löschen`} color="error" onClick={() => setAdvances(current => current.filter((_, i) => i !== index))}><DeleteIcon /></IconButton>
+                </Box>)}
+                <Button startIcon={<AddIcon />} onClick={() => setAdvances(current => [...current, { description: '', amount: '' }])}>Vorschuss hinzufügen</Button>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
                   Die Abzüge aus Organisation → Lohnabrechnungen werden angewendet. Prozentwerte beziehen sich auf den Bruttolohn. Spesen werden addiert, der Vorschuss wird danach abgezogen.
                 </Typography>
@@ -634,7 +641,7 @@ const Reports = () => {
                         <TableRow><TableCell><strong>Nettolohn</strong></TableCell><TableCell align="right"><strong>{money(payrollPreview.net_salary)}</strong></TableCell></TableRow>
                         {payrollPreview.expenses.map((item, index) => <TableRow key={index}><TableCell>Spesen: {item.name}</TableCell><TableCell align="right">{money(item.amount)}</TableCell></TableRow>)}
                         <TableRow><TableCell>Total Spesen</TableCell><TableCell align="right">{money(payrollPreview.total_expenses)}</TableCell></TableRow>
-                        <TableRow><TableCell>Vorschuss</TableCell><TableCell align="right">−{money(payrollPreview.advance)}</TableCell></TableRow>
+                        {payrollPreview.advances?.map((item, index) => <TableRow key={index}><TableCell>Vorschuss: {item.description}</TableCell><TableCell align="right">−{money(item.amount)}</TableCell></TableRow>)}
                         <TableRow><TableCell><strong>Auszahlungsbetrag</strong></TableCell><TableCell align="right"><strong>{money(payrollPreview.payout)}</strong></TableCell></TableRow>
                       </TableBody></Table>
                       {payrollPreview.deductions.length === 0 && <Alert severity="info" sx={{ mt: 2 }}>Es sind keine Abzüge hinterlegt.</Alert>}
