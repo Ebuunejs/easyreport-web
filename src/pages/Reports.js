@@ -54,6 +54,7 @@ const Reports = () => {
   const [hourlyRate, setHourlyRate] = useState('');
   const [monthlySalary, setMonthlySalary] = useState('');
   const [payoutDate, setPayoutDate] = useState('');
+  const [creationDate, setCreationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [expenses, setExpenses] = useState([]);
   const [advances, setAdvances] = useState([]);
   const [payrollPreview, setPayrollPreview] = useState(null);
@@ -87,7 +88,7 @@ const Reports = () => {
   const isPayroll = ['fixed_payroll', 'hourly_payroll'].includes(reportType);
   const validDates = isValid(startDate) && isValid(endDate) && startDate <= endDate;
 
-  useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, monthlySalary, expenses, advances, description, payoutDate]);
+  useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, monthlySalary, expenses, advances, description, payoutDate, creationDate]);
 
   const loadCompanies = async () => {
     try {
@@ -116,6 +117,7 @@ const Reports = () => {
     end_date: format(endDate, 'yyyy-MM-dd'),
     description,
     ...(isPayroll ? {
+      creation_date: creationDate || null,
       payout_date: payoutDate || null,
       advances: advances.map(item => ({ description: item.description.trim(), amount: item.amount.replace(',', '.') })),
       ...(reportType === 'hourly_payroll' ? { hourly_rate: hourlyRate.replace(',', '.') } : { monthly_salary: monthlySalary.replace(',', '.') }),
@@ -174,6 +176,7 @@ const Reports = () => {
   const resetForm = () => {
     setEditingReport(null);
     setPayoutDate('');
+    setCreationDate(format(new Date(), 'yyyy-MM-dd'));
     setSelectedEmployee('');
     setSelectedCompany('');
     setReportType('');
@@ -194,6 +197,7 @@ const Reports = () => {
       const saved = report.report_data || {};
       setEditingReport(report.id);
       setPayoutDate(saved.payout_date || '');
+      setCreationDate(saved.creation_date || format(new Date(), 'yyyy-MM-dd'));
       setSelectedEmployee(report.employee_id);
       setSelectedCompany(saved.company_id || report.employee?.company_id || '');
       setReportType(report.report_type || 'hours');
@@ -539,6 +543,8 @@ const Reports = () => {
               </LocalizationProvider>
 
               {isPayroll && <Box sx={{ mb: 2 }}>
+                <TextField fullWidth type="date" label="Erstellungsdatum" value={creationDate} onChange={event => setCreationDate(event.target.value)}
+                  InputLabelProps={{ shrink: true }} sx={{ mb: 2 }} helperText="Standardmässig heute; kann für die Abrechnung angepasst werden." />
                 <TextField fullWidth type="date" label="Auszahlungsdatum" value={payoutDate} onChange={event => setPayoutDate(event.target.value)}
                   InputLabelProps={{ shrink: true }} sx={{ mb: 2 }} helperText="Aus dem Mitarbeiterprofil vorbelegt; ohne Angabe gilt die Profilvorgabe oder das Monatsende." />
                 <TextField fullWidth required sx={{ mb: 2 }}
