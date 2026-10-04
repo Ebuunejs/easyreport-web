@@ -79,7 +79,8 @@ const Employees = () => {
     nationality: '',
     idexpirity: '',
     is_active: true,
-    children: []
+    children: [],
+    payroll_deductions: []
   });
   const [statusFilter, setStatusFilter] = useState('all');
   const [isMobile, setIsMobile] = useState(false);
@@ -323,7 +324,8 @@ const Employees = () => {
       nationality: '',
       idexpirity: '',
       is_active: true,
-      children: []
+      children: [],
+      payroll_deductions: []
     });
   };
 
@@ -382,6 +384,7 @@ const Employees = () => {
         course_notes: newEmployee.course_notes || {},
         selected_courses: newEmployee.selected_courses || [],
         children: newEmployee.children || [],
+        payroll_deductions: newEmployee.payroll_deductions || [],
         password: newEmployee.password,
         address: newEmployee.address || null,
         plz: newEmployee.plz || null,
@@ -639,6 +642,7 @@ const Employees = () => {
         selected_courses: coursesWithDescriptions, // Mit Beschreibungen
         course_ids: courseIds,
         children: employee.children || [],
+        payroll_deductions: employee.payroll_deductions || [],
         address: employee.address || '',
         plz: employee.plz || '',
         place: employee.place || '',
@@ -749,6 +753,7 @@ const Employees = () => {
         course_ids: courseIds,
         course_notes: courseNotes, // Füge course_notes hinzu
         children: editEmployeeData.children || [],
+        payroll_deductions: editEmployeeData.payroll_deductions || [],
         address: editEmployeeData.address || "",
         plz: editEmployeeData.plz || "",
         place: editEmployeeData.place || "",

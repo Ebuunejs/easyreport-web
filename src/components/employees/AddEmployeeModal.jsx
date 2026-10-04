@@ -45,11 +45,10 @@ import {
   EventNote as EventNoteIcon,
   Badge as BadgeIcon,
   School as SchoolIcon,
-  Add as AddIcon,
-  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import CourseService from '../../services/CourseService';
+import PayrollDataStep from './PayrollDataStep';
 
 // Gemeinsame Stil-Definitionen für Auswahlfelder
 const selectStyles = {
@@ -89,14 +88,13 @@ const AddEmployeeModal = ({
   bildungsTags = [],
   isManager = false
 }) => {
-  const children = newEmployee.children || [];
-  const updateChildren = (value) => handleInputChange({ target: { name: 'children', value } });
   const [activeStep, setActiveStep] = useState(0);
   const theme = useTheme();
   
   const steps = [
     'Persönliche Daten',
     'Arbeitsinformationen',
+    'Lohndaten',
     'Kontaktdaten',
     'Zusatzinformationen',
     'Qualifikationen & Kurse'
@@ -733,8 +731,11 @@ const AddEmployeeModal = ({
             </>
           )}
           
-          {/* SCHRITT 3: Kontaktdaten */}
-          {activeStep === 2 && (
+          {/* SCHRITT 3: Lohndaten */}
+          {activeStep === 2 && <PayrollDataStep open={open} employeeData={newEmployee} handleInputChange={handleInputChange} />}
+
+          {/* SCHRITT 4: Kontaktdaten */}
+          {activeStep === 3 && (
             <>
               <Typography variant="h6" sx={{ mb: 2 }}>Kontaktdaten und Adresse</Typography>
               <Paper elevation={0} sx={{ p: 3, bgcolor: '#f8f9fa', borderRadius: 2, mb: 3 }}>
@@ -914,24 +915,13 @@ const AddEmployeeModal = ({
                       helperText="Nationalität des Mitarbeiters"
                     />
                   </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Kinderzulagen</Typography>
-                    {children.map((child, index) => (
-                      <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-                        <TextField fullWidth label="Kind" value={child.name || ''} onChange={(e) => updateChildren(children.map((item, i) => i === index ? { ...item, name: e.target.value } : item))} />
-                        <TextField fullWidth label="Kinderzulage (CHF)" type="number" inputProps={{ min: 0, step: 0.01 }} value={child.allowance || ''} onChange={(e) => updateChildren(children.map((item, i) => i === index ? { ...item, allowance: e.target.value } : item))} />
-                        <IconButton aria-label={`Kind ${index + 1} entfernen`} color="error" onClick={() => updateChildren(children.filter((_, i) => i !== index))}><DeleteIcon /></IconButton>
-                      </Box>
-                    ))}
-                    <Button startIcon={<AddIcon />} onClick={() => updateChildren([...children, { name: '', allowance: '' }])}>Kind hinzufügen</Button>
-                  </Grid>
                 </Grid>
               </Paper>
             </>
           )}
           
-          {/* SCHRITT 4: Zusatzinformationen */}
-          {activeStep === 3 && (
+          {/* SCHRITT 5: Zusatzinformationen */}
+          {activeStep === 4 && (
             <>
               <Typography variant="h6" sx={{ mb: 2 }}>Projekte und Benachrichtigungen</Typography>
               <Paper elevation={0} sx={{ p: 3, bgcolor: '#f8f9fa', borderRadius: 2, mb: 3 }}>
@@ -997,8 +987,8 @@ const AddEmployeeModal = ({
             </>
           )}
           
-          {/* SCHRITT 5: Qualifikationen & Kurse */}
-          {activeStep === 4 && (
+          {/* SCHRITT 6: Qualifikationen & Kurse */}
+          {activeStep === 5 && (
             <>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56, mr: 2 }}>
