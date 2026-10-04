@@ -43,7 +43,9 @@ import {
   Home as HomeIcon,
   EventNote as EventNoteIcon,
   Badge as BadgeIcon,
-  School as SchoolIcon
+  School as SchoolIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import CourseService from '../../services/CourseService';
 import EmployeeService from '../../services/EmployeeService';
@@ -86,6 +88,8 @@ const EditEmployeeModal = ({
   bildungsTags = [],
   isManager = false
 }) => {
+  const children = employeeData?.children || [];
+  const updateChildren = (value) => handleInputChange({ target: { name: 'children', value } });
   const [activeStep, setActiveStep] = useState(0);
   const theme = useTheme();
   const [courses, setCourses] = useState([]);
@@ -936,6 +940,17 @@ const EditEmployeeModal = ({
                       variant="outlined"
                       helperText="Nationalität des Mitarbeiters"
                     />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Kinderzulagen</Typography>
+                    {children.map((child, index) => (
+                      <Box key={child.id || index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                        <TextField fullWidth label="Kind" value={child.name || ''} onChange={(e) => updateChildren(children.map((item, i) => i === index ? { ...item, name: e.target.value } : item))} />
+                        <TextField fullWidth label="Kinderzulage (CHF)" type="number" inputProps={{ min: 0, step: 0.01 }} value={child.allowance || ''} onChange={(e) => updateChildren(children.map((item, i) => i === index ? { ...item, allowance: e.target.value } : item))} />
+                        <IconButton aria-label={`Kind ${index + 1} entfernen`} color="error" onClick={() => updateChildren(children.filter((_, i) => i !== index))}><DeleteIcon /></IconButton>
+                      </Box>
+                    ))}
+                    <Button startIcon={<AddIcon />} onClick={() => updateChildren([...children, { name: '', allowance: '' }])}>Kind hinzufügen</Button>
                   </Grid>
                 </Grid>
               </Paper>

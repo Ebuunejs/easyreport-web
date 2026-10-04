@@ -78,7 +78,8 @@ const Employees = () => {
     idform: '',
     nationality: '',
     idexpirity: '',
-    is_active: true
+    is_active: true,
+    children: []
   });
   const [statusFilter, setStatusFilter] = useState('all');
   const [isMobile, setIsMobile] = useState(false);
@@ -321,7 +322,8 @@ const Employees = () => {
       idform: '',
       nationality: '',
       idexpirity: '',
-      is_active: true
+      is_active: true,
+      children: []
     });
   };
 
@@ -379,6 +381,7 @@ const Employees = () => {
         course_ids: newEmployee.course_ids || [],
         course_notes: newEmployee.course_notes || {},
         selected_courses: newEmployee.selected_courses || [],
+        children: newEmployee.children || [],
         password: newEmployee.password,
         address: newEmployee.address || null,
         plz: newEmployee.plz || null,
@@ -635,6 +638,7 @@ const Employees = () => {
         courses: courses, // Direkt das komplette Kursobjekt mit Pivot-Daten
         selected_courses: coursesWithDescriptions, // Mit Beschreibungen
         course_ids: courseIds,
+        children: employee.children || [],
         address: employee.address || '',
         plz: employee.plz || '',
         place: employee.place || '',
@@ -744,6 +748,7 @@ const Employees = () => {
         bildungs_tag_ids: editEmployeeData.bildungs_tag_ids || [],
         course_ids: courseIds,
         course_notes: courseNotes, // Füge course_notes hinzu
+        children: editEmployeeData.children || [],
         address: editEmployeeData.address || "",
         plz: editEmployeeData.plz || "",
         place: editEmployeeData.place || "",
