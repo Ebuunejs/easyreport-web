@@ -53,6 +53,7 @@ const Reports = () => {
   const [selectedCompany, setSelectedCompany] = useState('');
   const [hourlyRate, setHourlyRate] = useState('');
   const [monthlySalary, setMonthlySalary] = useState('');
+  const [payBasis, setPayBasis] = useState('exclusive');
   const [payoutDate, setPayoutDate] = useState('');
   const [creationDate, setCreationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [expenses, setExpenses] = useState([]);
@@ -106,6 +107,7 @@ const Reports = () => {
     setSelectedCompany(employee?.company_id || '');
     setHourlyRate(employee?.hourly_rate == null ? '' : String(employee.hourly_rate));
     setMonthlySalary(employee?.monthly_salary == null ? '' : String(employee.monthly_salary));
+    setPayBasis(employee?.pay_basis || 'exclusive');
     setExpenses([]);
   };
 
@@ -116,7 +118,8 @@ const Reports = () => {
     start_date: format(startDate, 'yyyy-MM-dd'),
     end_date: format(endDate, 'yyyy-MM-dd'),
     description,
-    ...(isPayroll ? {
+      ...(isPayroll ? {
+      pay_basis: payBasis,
       creation_date: creationDate || null,
       payout_date: payoutDate || null,
       advances: advances.map(item => ({ description: item.description.trim(), amount: item.amount.replace(',', '.') })),
@@ -182,7 +185,8 @@ const Reports = () => {
     setReportType('');
     setDescription('');
     setHourlyRate('');
-    setMonthlySalary('');
+      setMonthlySalary('');
+    setPayBasis('exclusive');
     setExpenses([]);
     setAdvances([]);
     setPayrollPreview(null);
@@ -205,6 +209,7 @@ const Reports = () => {
       setEndDate(new Date(report.end_date || report.report_date));
       setHourlyRate(String(saved.hourly_rate ?? ''));
       setMonthlySalary(String(saved.monthly_salary ?? saved.gross_salary ?? ''));
+      setPayBasis(saved.pay_basis || report.employee?.pay_basis || 'exclusive');
       setExpenses((saved.expenses || []).map(item => ({ name: item.name, amount: String(item.amount) })));
       setAdvances((saved.advances || (saved.advance ? [{ description: 'Vorschuss', amount: saved.advance }] : [])).map(item => ({ description: item.description, amount: String(item.amount) })));
       setDescription(report.description || '');
@@ -548,11 +553,11 @@ const Reports = () => {
                 <TextField fullWidth type="date" label="Auszahlungsdatum" value={payoutDate} onChange={event => setPayoutDate(event.target.value)}
                   InputLabelProps={{ shrink: true }} sx={{ mb: 2 }} helperText="Aus dem Mitarbeiterprofil vorbelegt; ohne Angabe gilt die Profilvorgabe oder das Monatsende." />
                 <TextField fullWidth required sx={{ mb: 2 }}
-                  label={reportType === 'hourly_payroll' ? 'Stundenlohn (CHF)' : 'Monatlicher Fixlohn (CHF)'}
+                  label={`${reportType === 'hourly_payroll' ? 'Stundenlohn' : 'Fixlohn'} (CHF) – ${payBasis === 'exclusive' ? 'exkl.' : 'inkl.'}${reportType === 'hourly_payroll' ? '' : ' (Monatlicher Fixlohn)'}`}
                   value={reportType === 'hourly_payroll' ? hourlyRate : monthlySalary}
                   onChange={event => reportType === 'hourly_payroll' ? setHourlyRate(event.target.value) : setMonthlySalary(event.target.value)}
                   inputProps={{ inputMode: 'decimal' }}
-                  helperText={reportType === 'hourly_payroll' ? 'Vorbelegt aus dem Mitarbeiter. Es zählen nur genehmigte Stunden des Monats.' : 'Bruttolohn für den ausgewählten Monat.'} />
+                  helperText={reportType === 'hourly_payroll' ? `Vorbelegt aus dem Mitarbeiter (${payBasis === 'exclusive' ? 'exkl.' : 'inkl.'}). Es zählen nur genehmigte Stunden des Monats.` : `Vorbelegt aus dem Mitarbeiter (${payBasis === 'exclusive' ? 'exkl.' : 'inkl.'}).` } />
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>Spesen</Typography>
                 {expenses.map((expense, index) => <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
                   <TextField label="Bezeichnung" value={expense.name} inputProps={{ maxLength: 255 }}
@@ -633,6 +638,7 @@ const Reports = () => {
                       <strong>Zeitraum:</strong> {validDates ? `${format(startDate, 'dd.MM.yyyy')} - ${format(endDate, 'dd.MM.yyyy')}` : 'Bitte gültigen Zeitraum wählen'}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}><strong>Firma:</strong> {companies.find(company => String(company.id) === String(selectedCompany))?.name || 'Nicht ausgewählt'}</Typography>
+                    {isPayroll && <Typography variant="body2" sx={{ mb: 1 }}><strong>Lohnbasis:</strong> {payBasis === 'exclusive' ? 'Exkl. Ferien-/Feiertags-/13. Monatslohn' : 'Inkl. Ferien-/Feiertags-/13. Monatslohn'}</Typography>}
                     {payrollPreview && <Box sx={{ mt: 2 }}>
                       {reportType === 'hourly_payroll' && <Typography>Genehmigte Stunden: {payrollPreview.total_hours}</Typography>}
                       <Typography>Versicherungsnummer: {payrollPreview.employee_insurance_number || '–'}</Typography>
@@ -641,7 +647,9 @@ const Reports = () => {
                       <Typography>Kontonummer: {payrollPreview.employee_account_number || '–'}</Typography>
                       <Typography>Auszahlungsdatum: {payrollPreview.payout_date || '–'}</Typography>
                       <Table size="small" aria-label="Lohnberechnung"><TableBody>
-                        <TableRow><TableCell>Bruttolohn</TableCell><TableCell align="right">{money(payrollPreview.gross_salary)}</TableCell></TableRow>
+                        <TableRow><TableCell>{payrollPreview.pay_basis === 'exclusive' ? 'Lohnbasis' : 'Lohn inkl. Zulagen'}</TableCell><TableCell align="right">{money(payrollPreview.base_salary ?? payrollPreview.gross_salary)}</TableCell></TableRow>
+                        {(payrollPreview.salary_components || []).map((item, index) => <TableRow key={`salary-component-${index}`}><TableCell>{item.name} ({Number(item.rate).toFixed(2)} %)</TableCell><TableCell align="right">{money(item.amount)}</TableCell></TableRow>)}
+                        <TableRow><TableCell><strong>Bruttolohn</strong></TableCell><TableCell align="right"><strong>{money(payrollPreview.gross_salary)}</strong></TableCell></TableRow>
                         {payrollPreview.deductions.map((item, index) => <TableRow key={index}><TableCell>{item.name} ({Number(item.value)} {item.unit === 'percent' ? '%' : 'CHF'})</TableCell><TableCell align="right">−{money(item.amount)}</TableCell></TableRow>)}
                         <TableRow><TableCell>Total Abzüge</TableCell><TableCell align="right">−{money(payrollPreview.total_deductions)}</TableCell></TableRow>
                         <TableRow><TableCell><strong>Nettolohn</strong></TableCell><TableCell align="right"><strong>{money(payrollPreview.net_salary)}</strong></TableCell></TableRow>
