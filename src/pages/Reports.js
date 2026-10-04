@@ -105,7 +105,7 @@ const Reports = () => {
     setPayoutDate(employee?.payout_date?.slice(0, 10) || '');
     setSelectedCompany(employee?.company_id || '');
     setHourlyRate(employee?.hourly_rate == null ? '' : String(employee.hourly_rate));
-    setMonthlySalary('');
+    setMonthlySalary(employee?.monthly_salary == null ? '' : String(employee.monthly_salary));
     setExpenses([]);
   };
 

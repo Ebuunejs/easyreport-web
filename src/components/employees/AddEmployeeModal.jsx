@@ -213,7 +213,7 @@ const AddEmployeeModal = ({
     }
     if (activeStep === 1) {
       const baseFields = newEmployee.company_id && newEmployee.position && newEmployee.employee_number && newEmployee.hire_date;
-      return isManager ? baseFields : baseFields && newEmployee.hourly_rate;
+      return isManager ? baseFields : baseFields && (newEmployee.pay_type === 'fixed' ? newEmployee.monthly_salary : newEmployee.hourly_rate && newEmployee.hourly_rate_sale);
     }
     if (activeStep === 2) {
       // Bei Kontaktdaten und persönlichen Informationen nur Basisvalidierung
@@ -672,50 +672,39 @@ const AddEmployeeModal = ({
                       helperText="Datum der Einstellung"
                     />
                   </Grid>
-                  {!isManager && (
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        name="hourly_rate"
-                        label="Stundensatz (CHF) - Einkauf"
-                        type="number"
-                        fullWidth
-                        value={newEmployee.hourly_rate || ''}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: <InputAdornment position="start">CHF</InputAdornment>,
-                          inputProps: { step: 0.01, min: 0 }
-                        }}
-                        InputLabelProps={{
-                          sx: { fontWeight: 500 }
-                        }}
-                        required
-                        variant="outlined"
-                        helperText="Stundensatz für Einkauf des Mitarbeiters"
-                      />
+                  {!isManager && <>
+                    <Grid item xs={12} md={4}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Lohnart</InputLabel>
+                        <Select name="pay_type" value={newEmployee.pay_type || 'hourly'} onChange={handleInputChange} label="Lohnart">
+                          <MenuItem value="hourly">Stundenlohn</MenuItem>
+                          <MenuItem value="fixed">Fixlohn</MenuItem>
+                        </Select>
+                      </FormControl>
                     </Grid>
-                  )}
-                  {!isManager && (
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        name="hourly_rate_sale"
-                        label="Stundensatz (CHF) - Verkauf"
-                        type="number"
-                        fullWidth
-                        value={newEmployee.hourly_rate_sale || ''}
-                        onChange={handleInputChange}
-                        InputProps={{
-                          startAdornment: <InputAdornment position="start">CHF</InputAdornment>,
-                          inputProps: { step: 0.01, min: 0 }
-                        }}
-                        InputLabelProps={{
-                          sx: { fontWeight: 500 }
-                        }}
-                        required
-                        variant="outlined"
-                        helperText="Stundensatz für Verkauf des Mitarbeiters"
-                      />
+                    <Grid item xs={12} md={4}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Lohn inkl. / exkl.</InputLabel>
+                        <Select name="pay_basis" value={newEmployee.pay_basis || 'exclusive'} onChange={handleInputChange} label="Lohn inkl. / exkl.">
+                          <MenuItem value="inclusive">Inkl.</MenuItem>
+                          <MenuItem value="exclusive">Exkl.</MenuItem>
+                        </Select>
+                      </FormControl>
                     </Grid>
-                  )}
+                    {newEmployee.pay_type === 'fixed' ? <Grid item xs={12} md={4}>
+                      <TextField name="monthly_salary" label="Fixlohn (CHF)" type="number" fullWidth value={newEmployee.monthly_salary || ''} onChange={handleInputChange}
+                        InputProps={{ startAdornment: <InputAdornment position="start">CHF</InputAdornment>, inputProps: { step: 0.01, min: 0 } }} required helperText="Monatlicher Fixlohn" />
+                    </Grid> : <>
+                      <Grid item xs={12} md={4}>
+                        <TextField name="hourly_rate" label="Stundenlohn (CHF) - Einkauf" type="number" fullWidth value={newEmployee.hourly_rate || ''} onChange={handleInputChange}
+                          InputProps={{ startAdornment: <InputAdornment position="start">CHF</InputAdornment>, inputProps: { step: 0.01, min: 0 } }} required helperText="Stundenlohn Einkauf" />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField name="hourly_rate_sale" label="Stundenlohn (CHF) - Verkauf" type="number" fullWidth value={newEmployee.hourly_rate_sale || ''} onChange={handleInputChange}
+                          InputProps={{ startAdornment: <InputAdornment position="start">CHF</InputAdornment>, inputProps: { step: 0.01, min: 0 } }} required helperText="Stundenlohn Verkauf" />
+                      </Grid>
+                    </>}
+                  </>}
                   <Grid item xs={12} md={6}>
                     <TextField
                       name="minimum_wage"
