@@ -91,6 +91,29 @@ const Reports = () => {
 
   useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, monthlySalary, expenses, advances, description, payoutDate, creationDate]);
 
+  const validatePayrollItems = () => {
+    const incompleteExpense = expenses.findIndex(item => {
+      const name = String(item.name || '').trim();
+      const amount = String(item.amount || '').trim();
+      return (name || amount) && (!name || !amount);
+    });
+    if (incompleteExpense !== -1) {
+      setError(`Bitte vervollständigen Sie Spese ${incompleteExpense + 1} mit Bezeichnung und Betrag oder entfernen Sie die Zeile.`);
+      return false;
+    }
+
+    const incompleteAdvance = advances.findIndex(item => {
+      const description = String(item.description || '').trim();
+      const amount = String(item.amount || '').trim();
+      return (description || amount) && (!description || !amount);
+    });
+    if (incompleteAdvance !== -1) {
+      setError(`Bitte vervollständigen Sie Vorschuss ${incompleteAdvance + 1} mit Beschreibung und Betrag oder entfernen Sie die Zeile.`);
+      return false;
+    }
+    return true;
+  };
+
   const loadCompanies = async () => {
     try {
       const response = await api.get('/companies');
@@ -129,10 +152,15 @@ const Reports = () => {
   });
 
   const showRequestError = (err) => setError(
-    Object.values(err.response?.data?.errors || {}).flat().join(' ') || err.response?.data?.message || 'Der Bericht konnte nicht erstellt werden.'
+    Object.entries(err.response?.data?.errors || {}).map(([field, messages]) => {
+      const match = field.match(/^(expenses|advances)\.(\d+)\.(name|description|amount)$/);
+      if (match) return `${match[1] === 'expenses' ? 'Spese' : 'Vorschuss'} ${Number(match[2]) + 1}: ${messages.join(' ')}`;
+      return messages.join(' ');
+    }).join(' ') || err.response?.data?.message || 'Der Bericht konnte nicht erstellt werden.'
   );
 
   const calculatePayroll = async () => {
+    if (!validatePayrollItems()) return;
     setPreviewLoading(true);
     setError(null);
     setPayrollPreview(null);
@@ -247,6 +275,7 @@ const Reports = () => {
       setError('Bitte wählen Sie einen Mitarbeiter und einen Berichtstyp aus.');
       return;
     }
+    if (isPayroll && !validatePayrollItems()) return;
 
     setLoading(true);
     setError(null);
