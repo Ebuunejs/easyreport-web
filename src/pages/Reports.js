@@ -52,6 +52,7 @@ const Reports = () => {
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [hourlyRate, setHourlyRate] = useState('');
+  const [manualHours, setManualHours] = useState('');
   const [monthlySalary, setMonthlySalary] = useState('');
   const [payBasis, setPayBasis] = useState('exclusive');
   const [payoutDate, setPayoutDate] = useState('');
@@ -89,7 +90,7 @@ const Reports = () => {
   const isPayroll = ['fixed_payroll', 'hourly_payroll'].includes(reportType);
   const validDates = isValid(startDate) && isValid(endDate) && startDate <= endDate;
 
-  useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, monthlySalary, expenses, advances, description, payoutDate, creationDate]);
+  useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, manualHours, monthlySalary, expenses, advances, description, payoutDate, creationDate]);
 
   const validatePayrollItems = () => {
     const incompleteExpense = expenses.findIndex(item => {
@@ -129,6 +130,7 @@ const Reports = () => {
     setPayoutDate(employee?.payout_date?.slice(0, 10) || '');
     setSelectedCompany(employee?.company_id || '');
     setHourlyRate(employee?.hourly_rate == null ? '' : String(employee.hourly_rate));
+    setManualHours('');
     setMonthlySalary(employee?.monthly_salary == null ? '' : String(employee.monthly_salary));
     setPayBasis(employee?.pay_basis || 'exclusive');
     setExpenses([]);
@@ -147,6 +149,7 @@ const Reports = () => {
       payout_date: payoutDate || null,
       advances: advances.map(item => ({ description: item.description.trim(), amount: item.amount.replace(',', '.') })),
       ...(reportType === 'hourly_payroll' ? { hourly_rate: hourlyRate.replace(',', '.') } : { monthly_salary: monthlySalary.replace(',', '.') }),
+      ...(reportType === 'hourly_payroll' && manualHours.trim() !== '' ? { manual_hours: manualHours.replace(',', '.') } : {}),
       expenses: expenses.map(expense => ({ name: expense.name.trim(), amount: expense.amount.replace(',', '.') })),
     } : {}),
   });
@@ -236,6 +239,7 @@ const Reports = () => {
       setStartDate(new Date(report.start_date || report.report_date));
       setEndDate(new Date(report.end_date || report.report_date));
       setHourlyRate(String(saved.hourly_rate ?? ''));
+      setManualHours(saved.manual_hours == null ? '' : String(saved.manual_hours));
       setMonthlySalary(String(saved.monthly_salary ?? saved.gross_salary ?? ''));
       setPayBasis(saved.pay_basis || report.employee?.pay_basis || 'exclusive');
       setExpenses((saved.expenses || []).map(item => ({ name: item.name, amount: String(item.amount) })));
@@ -587,6 +591,12 @@ const Reports = () => {
                   onChange={event => reportType === 'hourly_payroll' ? setHourlyRate(event.target.value) : setMonthlySalary(event.target.value)}
                   inputProps={{ inputMode: 'decimal' }}
                   helperText={reportType === 'hourly_payroll' ? `Vorbelegt aus dem Mitarbeiter (${payBasis === 'exclusive' ? 'exkl.' : 'inkl.'}). Es zählen nur genehmigte Stunden des Monats.` : `Vorbelegt aus dem Mitarbeiter (${payBasis === 'exclusive' ? 'exkl.' : 'inkl.'}).` } />
+                {reportType === 'hourly_payroll' && <TextField fullWidth sx={{ mb: 2 }}
+                  label="Stunden manuell eingeben (optional)"
+                  value={manualHours}
+                  onChange={event => setManualHours(event.target.value)}
+                  inputProps={{ inputMode: 'decimal', min: 0, step: 0.01 }}
+                  helperText="Wenn ausgefüllt, werden diese Stunden anstelle der genehmigten Systemstunden verwendet." />}
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>Spesen</Typography>
                 {expenses.map((expense, index) => <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
                   <TextField label="Bezeichnung" value={expense.name} inputProps={{ maxLength: 255 }}
