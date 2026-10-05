@@ -80,7 +80,8 @@ const Employees = () => {
     idexpirity: '',
     is_active: true,
     children: [],
-    payroll_deductions: []
+    payroll_deductions: [],
+    withholding_tax: { name: 'Quellensteuer', value: '', unit: 'percent', enabled: false }
   });
   const [statusFilter, setStatusFilter] = useState('all');
   const [isMobile, setIsMobile] = useState(false);
@@ -325,7 +326,8 @@ const Employees = () => {
       idexpirity: '',
       is_active: true,
       children: [],
-      payroll_deductions: []
+      payroll_deductions: [],
+      withholding_tax: { name: 'Quellensteuer', value: '', unit: 'percent', enabled: false }
     });
   };
 
@@ -385,6 +387,7 @@ const Employees = () => {
         selected_courses: newEmployee.selected_courses || [],
         children: newEmployee.children || [],
         payroll_deductions: newEmployee.payroll_deductions || [],
+        withholding_tax: newEmployee.withholding_tax || null,
         password: newEmployee.password,
         address: newEmployee.address || null,
         plz: newEmployee.plz || null,
@@ -643,6 +646,7 @@ const Employees = () => {
         course_ids: courseIds,
         children: employee.children || [],
         payroll_deductions: employee.payroll_deductions || [],
+        withholding_tax: employee.withholding_tax || { name: 'Quellensteuer', value: '', unit: 'percent', enabled: false },
         address: employee.address || '',
         plz: employee.plz || '',
         place: employee.place || '',
@@ -754,6 +758,7 @@ const Employees = () => {
         course_notes: courseNotes, // Füge course_notes hinzu
         children: editEmployeeData.children || [],
         payroll_deductions: editEmployeeData.payroll_deductions || [],
+        withholding_tax: editEmployeeData.withholding_tax || null,
         address: editEmployeeData.address || "",
         plz: editEmployeeData.plz || "",
         place: editEmployeeData.place || "",
