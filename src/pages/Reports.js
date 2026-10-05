@@ -90,6 +90,13 @@ const Reports = () => {
   const isPayroll = ['fixed_payroll', 'hourly_payroll'].includes(reportType);
   const validDates = isValid(startDate) && isValid(endDate) && startDate <= endDate;
 
+  const normalizeDecimal = value => {
+    const normalized = String(value ?? '').trim().replace(',', '.');
+    if (normalized === '') return '';
+    const number = Number(normalized);
+    return Number.isFinite(number) ? number.toFixed(2) : normalized;
+  };
+
   useEffect(() => { setPayrollPreview(null); }, [selectedEmployee, selectedCompany, reportType, startDate, endDate, hourlyRate, manualHours, monthlySalary, expenses, advances, description, payoutDate, creationDate]);
 
   const validatePayrollItems = () => {
@@ -148,7 +155,7 @@ const Reports = () => {
       creation_date: creationDate || null,
       payout_date: payoutDate || null,
       advances: advances.map(item => ({ description: item.description.trim(), amount: item.amount.replace(',', '.') })),
-      ...(reportType === 'hourly_payroll' ? { hourly_rate: hourlyRate.replace(',', '.') } : { monthly_salary: monthlySalary.replace(',', '.') }),
+      ...(reportType === 'hourly_payroll' ? { hourly_rate: normalizeDecimal(hourlyRate) } : { monthly_salary: normalizeDecimal(monthlySalary) }),
       ...(reportType === 'hourly_payroll' && manualHours.trim() !== '' ? { manual_hours: manualHours.replace(',', '.') } : {}),
       expenses: expenses.map(expense => ({ name: expense.name.trim(), amount: expense.amount.replace(',', '.') })),
     } : {}),
