@@ -24,6 +24,12 @@ const PayrollDataStep = ({ open, employeeData, handleInputChange }) => {
   const [loading, setLoading] = useState(false);
   const children = employeeData?.children || [];
   const deductions = employeeData?.payroll_deductions || [];
+  const withholdingTax = employeeData?.withholding_tax || {
+    name: 'Quellensteuer',
+    value: '',
+    unit: 'percent',
+    enabled: false,
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -48,6 +54,7 @@ const PayrollDataStep = ({ open, employeeData, handleInputChange }) => {
   const update = (name, value) => handleInputChange({ target: { name, value } });
   const updateChild = (index, patch) => update('children', children.map((child, i) => i === index ? { ...child, ...patch } : child));
   const updateDeduction = (index, patch) => update('payroll_deductions', deductions.map((row, i) => i === index ? { ...row, ...patch } : row));
+  const updateWithholdingTax = patch => update('withholding_tax', { ...withholdingTax, ...patch, name: 'Quellensteuer' });
 
   return (
     <>
@@ -91,6 +98,22 @@ const PayrollDataStep = ({ open, employeeData, handleInputChange }) => {
           </Box>
         ))}
         {!loading && deductions.length === 0 && <Typography color="text.secondary">Keine Abzüge in der Organisation hinterlegt.</Typography>}
+
+        <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 4 }} gutterBottom>Steuer</Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(220px, 1fr) 150px 170px' }, gap: 2, alignItems: 'center' }}>
+          <FormControlLabel
+            control={<Checkbox checked={withholdingTax.enabled === true} onChange={e => updateWithholdingTax({ enabled: e.target.checked })} />}
+            label="Quellensteuer"
+          />
+          <TextField label="Betrag" type="number" inputProps={{ min: 0, step: 0.0001 }} value={withholdingTax.value ?? ''} onChange={e => updateWithholdingTax({ value: e.target.value })} />
+          <FormControl fullWidth>
+            <InputLabel>Einheit</InputLabel>
+            <Select label="Einheit" value={withholdingTax.unit || 'percent'} onChange={e => updateWithholdingTax({ unit: e.target.value })}>
+              <MenuItem value="percent">Prozent (%)</MenuItem>
+              <MenuItem value="fixed">Fixbetrag (CHF)</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Paper>
     </>
   );
