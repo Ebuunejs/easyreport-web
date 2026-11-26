@@ -46,10 +46,14 @@ import {
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import ContractModal from '../components/ContractModal';
+import EmploymentContractDialog from '../components/EmploymentContractDialog';
 import ContractService from '../services/ContractService';
 import api from '../api/axios';
 
 const Contracts = () => {
+  const [openEmploymentDialog, setOpenEmploymentDialog] = useState(false);
+  const [contractCreated, setContractCreated] = useState(false);
+  const [preview, setPreview] = useState({});
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Alle');
@@ -315,6 +319,26 @@ const Contracts = () => {
     );
   };
 
+  useEffect(() => {
+    if (!selectedContract?.path?.startsWith('generated-contracts/')) return;
+    let active = true;
+    let url;
+    ContractService.viewContract(selectedContract.id)
+      .then(({ data }) => {
+        if (!active) return;
+        url = URL.createObjectURL(data);
+        setPreview({ id: selectedContract.id, url });
+      })
+      .catch(() => {
+        if (active) setPreview({ id: selectedContract.id, error: true });
+      });
+    return () => {
+      active = false;
+      setPreview({});
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [selectedContract]);
+
   // PDF-Viewer für Dialog
   const renderPdfViewer = (contract) => {
     if (!contract) return null;
@@ -323,7 +347,13 @@ const Contracts = () => {
     
     if (fileExtension === 'pdf') {
       // PDF via iframe anzeigen (VIEW Route für Vorschau, nicht Download)
-      const pdfViewUrl = getViewUrl(contract.id);
+      const isGenerated = contract.path?.startsWith('generated-contracts/');
+      const pdfViewUrl = isGenerated ? preview.url : getViewUrl(contract.id);
+      if (isGenerated && (preview.id !== contract.id || !pdfViewUrl)) {
+        return preview.id === contract.id && preview.error
+          ? <Alert severity="error">Die Vertragsvorschau konnte nicht geladen werden.</Alert>
+          : <CircularProgress size={24} />;
+      }
       
       return (
         <Box sx={{ height: { xs: '50vh', sm: '70vh' }, position: 'relative' }}>
@@ -501,8 +531,28 @@ const Contracts = () => {
         >
           Vertrag hochladen
         </Button>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => { setContractCreated(false); setOpenEmploymentDialog(true); }}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
+          Neuer Vertrag
+        </Button>
       </Paper>
       
+      {openEmploymentDialog && (
+        <EmploymentContractDialog
+          onClose={() => setOpenEmploymentDialog(false)}
+          onCreated={() => {
+            setOpenEmploymentDialog(false);
+            setContractCreated(true);
+            loadContracts();
+          }}
+        />
+      )}
+      {contractCreated && <Alert severity="success" sx={{ mb: 2 }}>Arbeitsvertrag erstellt.</Alert>}
+
       {/* Loading Indicator */}
       {loading ? (
         <Paper sx={{ p: 3, textAlign: 'center' }}>
