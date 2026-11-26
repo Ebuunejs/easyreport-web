@@ -154,7 +154,7 @@ export default function EmploymentContractDialog({ onClose, onCreated }) {
               <Grid item xs={12}>
                 {input('terms', 'Vertragstexte', {
                   multiline: true, minRows: 6, required: true, inputProps: { maxLength: 12000 },
-                  helperText: 'Hier kannst du die vereinbarten Bestimmungen eingeben.',
+                  helperText: 'Beginne nummerierte Abschnitte in einer eigenen Zeile, etwa «1. Funktion und Aufgabe». Die Überschrift erscheint fett im PDF.',
                 })}
               </Grid>
             </Grid>
