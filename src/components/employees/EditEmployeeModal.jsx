@@ -728,11 +728,11 @@ const EditEmployeeModal = ({
                         <TextField name="hourly_rate" label="Stundenlohn (CHF) - Einkauf" type="number" fullWidth value={employeeData.hourly_rate || ''} onChange={handleInputChange}
                           InputProps={{ startAdornment: <InputAdornment position="start">CHF</InputAdornment>, inputProps: { step: 0.01, min: 0 } }} required helperText="Stundenlohn Einkauf" />
                       </Grid>
-                      <Grid item xs={12} md={4}>
-                        <TextField name="hourly_rate_sale" label="Stundenlohn (CHF) - Verkauf" type="number" fullWidth value={employeeData.hourly_rate_sale || ''} onChange={handleInputChange}
-                          InputProps={{ startAdornment: <InputAdornment position="start">CHF</InputAdornment>, inputProps: { step: 0.01, min: 0 } }} required helperText="Stundenlohn Verkauf" />
-                      </Grid>
                     </>}
+                    <Grid item xs={12} md={4}>
+                      <TextField name="hourly_rate_sale" label="Verkaufssatz (CHF/h)" type="number" fullWidth value={employeeData.hourly_rate_sale || ''} onChange={handleInputChange}
+                        InputProps={{ startAdornment: <InputAdornment position="start">CHF</InputAdornment>, inputProps: { step: 0.01, min: 0 } }} required={employeeData.pay_type !== 'fixed'} helperText="Verrechneter Betrag pro Stunde" />
+                    </Grid>
                   </>}
                   <Grid item xs={12} md={6}>
                     <TextField
